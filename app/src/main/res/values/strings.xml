@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">SimplePDF</string>
+    <string name="tool_merge">Merger PDF</string>
+    <string name="tool_split">Split</string>
+    <string name="tool_image">Image to PDF</string>
+    <string name="tool_edit">Edit PDF</string>
+    <string name="tool_browse">Browse PDF</string>
+    <string name="tool_image_to_pdf">Image to PDF</string>
+    <string name="title_activity_pdfviewer">PDFViewer</string>
+    <string name="go_to_page">Go to page</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
+    <string name="tool_optimize">Optimize PDF</string>
+    <string name="tools">Tools</string>
+    <string name="all_pdf">All PDF</string>
+    <string name="more">More</string>
+    <string name="merge">Merge</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_laucher">LaucherActivity</string>
+</resources>
