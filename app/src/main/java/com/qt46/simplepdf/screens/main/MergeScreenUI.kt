@@ -44,11 +44,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.qt46.simplepdf.R
+import com.qt46.simplepdf.constants.TOOL_MERGE_PDF
 import com.qt46.simplepdf.data.PDFFile
 import com.qt46.simplepdf.data.SearchBarStatus
 import kotlinx.coroutines.flow.StateFlow
@@ -57,15 +59,16 @@ import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.rememberReorderableLazyListState
 import org.burnoutcrew.reorderable.reorderable
+import org.w3c.dom.Text
 
 @Composable
 fun MergeScreen(files:
-                List<PDFFile> ,onMove:(ItemPosition, ItemPosition)->Unit,onMerge:(String)->Unit,onRemoveClicked:(PDFFile)->Unit,addFile:()->Unit){
+                List<PDFFile> ,onMove:(ItemPosition, ItemPosition,Int)->Unit,onMerge:(String)->Unit,onRemoveClicked:(PDFFile)->Unit,addFile:()->Unit){
 //    val files by data.collectAsState()
 
     val state = rememberReorderableLazyListState(onMove = { from, to ->
 
-        onMove(from,to)
+        onMove(from,to, TOOL_MERGE_PDF)
 
     })
     val openAlertDialog = remember { mutableStateOf(false) }
@@ -86,12 +89,10 @@ fun MergeScreen(files:
         TopAppBar(navigationIcon = {
             Icon(Icons.Default.ArrowBack, contentDescription = "back")
         }, actions = {
-            Icon(
-                Icons.Default.Add,
-                contentDescription = "merge icon",
-                modifier = Modifier.clickable {
-                    addFile()
-                })
+            TextButton(onClick = { addFile() }) {
+                Text(text = stringResource(id = R.string.action_add))
+            }
+
             Spacer(modifier = Modifier.width(9.dp))
             Icon(
                 Icons.Default.ArrowForward,
@@ -124,7 +125,9 @@ fun MergeScreen(files:
                             .shadow(elevation.value)
                     ) {
 //                        Text(text = item.filename)
-                        FileMerge(file = item,onRemoveClicked)
+                        FileMerge(modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp)).detectReorderAfterLongPress(state),file = item, onRemoveClicked =  onRemoveClicked)
                         if(index<files.lastIndex){
                             Row (modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.End){
                                 Divider(color = Color.Black, modifier = Modifier
@@ -141,14 +144,12 @@ fun MergeScreen(files:
 
 
 @Composable
-fun FileMerge(file:PDFFile,onRemoveClicked: (PDFFile) -> Unit){
+fun FileMerge(modifier: Modifier=Modifier,file:PDFFile,onRemoveClicked: (PDFFile) -> Unit){
 
         Row(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
+            modifier = modifier
         ) {
             Icon(
                  Icons.Default.Menu,

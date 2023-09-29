@@ -46,7 +46,9 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.qt46.simplepdf.R
+import com.qt46.simplepdf.constants.TOOL_IMAGE_TO_PDF
 import com.qt46.simplepdf.data.ImageFile
+import org.burnoutcrew.reorderable.ItemPosition
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.rememberReorderableLazyListState
@@ -55,10 +57,10 @@ import org.burnoutcrew.reorderable.reorderable
 
 @Composable
 //@Preview(showBackground = true)
-fun ImageToPDFScreen(files:List<ImageFile> = listOf(),onActionClicked:()->Unit){
+fun ImageToPDFScreen(files:List<ImageFile> = listOf(),onActionClicked:()->Unit,onMove:(ItemPosition,ItemPosition,Int)->Unit){
 
     val state = rememberReorderableLazyListState(onMove = { from, to ->
-
+        onMove(from,to, TOOL_IMAGE_TO_PDF)
 //        onMove(from,to)
 
     })

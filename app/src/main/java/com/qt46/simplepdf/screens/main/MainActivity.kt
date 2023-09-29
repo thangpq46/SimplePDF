@@ -49,6 +49,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -77,6 +78,7 @@ import com.qt46.simplepdf.constants.TOOL_BROWSE_PDF
 import com.qt46.simplepdf.constants.TOOL_IMAGE_TO_PDF
 import com.qt46.simplepdf.constants.TOOL_MERGE_PDF
 import com.qt46.simplepdf.constants.TOOL_OPTIMIZE
+import com.qt46.simplepdf.constants.TOOL_REORDER
 import com.qt46.simplepdf.constants.TOOL_SPLIT_PDF
 import com.qt46.simplepdf.constants.items
 import com.qt46.simplepdf.constants.tools
@@ -97,21 +99,23 @@ class MainActivity : ComponentActivity() {
                 //If multiple image selected
                 if (data?.clipData != null) {
 
-                    val count = data.clipData?.itemCount ?: 0
-//                    val list = mutableListOf<Uri>()
-                    for (i in 0 until count) {
-                        data.clipData?.getItemAt(i)?.uri?.let {
-                            viewModel.addImageToPDF(it)
-                        }
-                    }
+//                    val count = data.clipData?.itemCount ?: 0
+////                    val list = mutableListOf<Uri>()
+//                    for (i in 0 until count) {
+//                        data.clipData?.getItemAt(i)?.uri?.let {
+//                            viewModel.addImageToPDF(it)
+//                        }
+//                    }
 //                    viewModel.merge(list)
                 }
                 //If single image selected
                 else if (data?.data != null) {
                     val imageUri: Uri? = data.data
                     imageUri?.let {
+                        viewModel.initReorderPage(it)
 //                        viewModel.imageToPdf(it)
-                            viewModel.initPreviewSplit(it)
+//                            viewModel.initPreviewSplit(it)
+
 //                            viewModel.optimize(it)
                     }
                 }
@@ -182,13 +186,20 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     TOOL_SPLIT_PDF -> {
-                                        navController.navigate(Screen.SplitFile.route)
+                                        viewModel.SearchTextaaaa()
+//                                        navController.navigate(Screen.SplitFile.route)
+//                                        selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
+//                                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+//                                            type = "application/pdf"
+//                                        })
+                                    }
+                                    TOOL_REORDER->{
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
-                                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                                             type = "application/pdf"
                                         })
+                                        navController.navigate(Screen.ReOrderPage.route)
                                     }
-
                                     TOOL_IMAGE_TO_PDF -> {
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
@@ -272,7 +283,10 @@ class MainActivity : ComponentActivity() {
                             SplitScreen(viewModel.splitPages,viewModel.splitPagesSelectState,viewModel::splitPdf,viewModel::changePageState)
                         }
                         composable(Screen.ImageToPDF.route){
-                            ImageToPDFScreen(viewModel.listImageToPDF,viewModel::imageToPdf)
+                            ImageToPDFScreen(viewModel.listImageToPDF,viewModel::imageToPdf,viewModel::changeIndex)
+                        }
+                        composable(Screen.ReOrderPage.route){
+                            ReOrderPage(images = viewModel.pdfPageReorder,viewModel::reOrderPages,viewModel::reOrderIndexPages)
                         }
                     }
                 }
@@ -386,7 +400,7 @@ fun AllPDFFiles(
 ) {
     Column(modifier = modifier) {
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             items(items = filtedPDFs) {
                 PDFPreview(it, onClickItems = onClickItems)
             }
@@ -402,14 +416,11 @@ fun PDFPreview(
     onClickItems: (PDFFile) -> Unit,
     clickable: Boolean = true
 ) {
-    Button(
+    OutlinedButton(
         modifier = Modifier.fillMaxWidth(),
         enabled = clickable,
         onClick = { onClickItems(file) },
-        shape = RoundedCornerShape(10.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
+        shape = RoundedCornerShape(10.dp)
     ) {
         Row(
             horizontalArrangement = Arrangement.Start,
@@ -419,7 +430,7 @@ fun PDFPreview(
             Icon(
                 modifier = Modifier
                     .requiredSize(70.dp),
-                painter = painterResource(id = R.drawable.ic_browse),
+                painter = painterResource(id = R.drawable.ic_document),
                 tint = MaterialTheme.colorScheme.primary,
                 contentDescription = "pdf image"
             )

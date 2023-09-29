@@ -10,6 +10,7 @@ import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.PdfWriter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
 import java.io.InputStream
@@ -18,16 +19,16 @@ import java.io.OutputStream
 
 class PDFViewModel(private val application: Application) : AndroidViewModel(application) {
     val pdfUri = MutableStateFlow(Uri.parse(""))
+
+    private val _pdfPageCount=MutableStateFlow(0)
+    val pdfPageCount = _pdfPageCount.asStateFlow()
     fun initData(uri: String){
         this.pdfUri.update {
             Uri.parse(uri)
         }
-    }
-    private val _currentPage =  MutableStateFlow(0)
-    val currentPage: StateFlow<Int> = _currentPage
-    fun setCurrentPage(page: Int){
-        _currentPage.update {
-            page
+        val reader = PdfReader(application.contentResolver.openInputStream(Uri.parse(uri)))
+        _pdfPageCount.update {
+            reader.numberOfPages
         }
     }
 

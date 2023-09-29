@@ -2,21 +2,21 @@ package com.qt46.simplepdf.screens.main
 
 import android.app.Application
 import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.transition.Transition
+import com.itextpdf.kernel.colors.DeviceRgb
+import com.itextpdf.kernel.pdf.canvas.PdfCanvas
+import com.itextpdf.kernel.pdf.canvas.parser.PdfCanvasProcessor
 import com.itextpdf.text.Document
 import com.itextpdf.text.DocumentException
 import com.itextpdf.text.Image
@@ -27,9 +27,14 @@ import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.PdfStamper
 import com.itextpdf.text.pdf.PdfWriter
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
+import com.qt46.simplepdf.constants.SCALE_PREVIEW_REORDER
+import com.qt46.simplepdf.constants.TOOL_IMAGE_TO_PDF
+import com.qt46.simplepdf.constants.TOOL_MERGE_PDF
 import com.qt46.simplepdf.data.ImageFile
 import com.qt46.simplepdf.data.PDFFile
 import com.qt46.simplepdf.data.SearchBarStatus
+import com.qt46.simplepdf.data.SimplePositionalTextEventListener
+import com.qt46.simplepdf.data.SimpleTextWithRectangle
 import com.shockwave.pdfium.PdfDocument
 import com.shockwave.pdfium.PdfiumCore
 import kotlinx.coroutines.Dispatchers
@@ -81,15 +86,21 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 //        }
     }
 
-    fun changeIndex(from: ItemPosition, to: ItemPosition) {
-
+    fun changeIndex(from: ItemPosition, to: ItemPosition, tool: Int) {
         viewModelScope.launch {
-            _filesToMerge.add(to.index, _filesToMerge.removeAt(from.index))
-        }
+            when (tool) {
+                TOOL_MERGE_PDF -> {
 
-//        = data.value.toMutableList().apply {
-//
-//        }
+                    _filesToMerge.add(to.index, _filesToMerge.removeAt(from.index))
+
+                }
+
+                TOOL_IMAGE_TO_PDF -> {
+                    _listImageToPDF.add(to.index, _listImageToPDF.removeAt(from.index))
+                }
+            }
+
+        }
     }
 
     private fun changeSearchBarWidgetStatus(newState: Boolean) {
@@ -153,7 +164,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         while (iteratorPDFReader.hasNext()) {
             val pdfReader: PdfReader = iteratorPDFReader.next()
             //Create page and add content.
-            while (currentPdfReaderPage <= pdfReader.getNumberOfPages()) {
+            while (currentPdfReaderPage <= pdfReader.numberOfPages) {
                 document.newPage()
                 pdfImportedPage = writer.getImportedPage(
                     pdfReader, currentPdfReaderPage
@@ -180,7 +191,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                     application.contentResolver.openInputStream(_splitUri.value)
                 println("Reading $inFile")
                 val reader = PdfReader(inFile)
-                val n = reader.numberOfPages
+//                val n = reader.numberOfPages
                 val outFile = File(primaryExternalStorage, "splited.pdf")
                 val document = Document(reader.getPageSizeWithRotation(1))
                 val writer = PdfCopy(document, FileOutputStream(outFile))
@@ -251,9 +262,10 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
 
             document.open()
-            for( item in _listImageToPDF){
-                val image = Image.getInstance(application.contentResolver.openInputStream(Uri.parse(item.uri))
-                    ?.let { getBytes(it) }) // Change image's name and extension.
+            for (item in _listImageToPDF) {
+                val image =
+                    Image.getInstance(application.contentResolver.openInputStream(Uri.parse(item.uri))
+                        ?.let { getBytes(it) }) // Change image's name and extension.
 
 
                 val scaler: Float = (document.pageSize.width - document.leftMargin()
@@ -290,7 +302,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     private val _pdfFiles = MutableStateFlow<MutableList<PDFFile>>(mutableListOf())
-    val pdfFiles: StateFlow<MutableList<PDFFile>> = _pdfFiles
 
     private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText
@@ -413,6 +424,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private val _splitPagesSelectState = mutableStateListOf<Boolean>()
     val splitPagesSelectState: List<Boolean> = _splitPagesSelectState
     fun initPreviewSplit(uri: Uri) {
+
         viewModelScope.launch(Dispatchers.IO) {
             _splitUri.update {
                 uri
@@ -473,7 +485,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         _splitPagesSelectState[index] = !_splitPagesSelectState[index]
     }
 
-    fun searchText(text:String){
+    fun searchText(text: String) {
         val inFile: InputStream? =
             application.contentResolver.openInputStream(_splitUri.value)
         println("Reading $inFile")
@@ -482,16 +494,176 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     private val _listImageToPDF = mutableStateListOf<ImageFile>()
-    val listImageToPDF:List<ImageFile> =_listImageToPDF
+    val listImageToPDF: List<ImageFile> = _listImageToPDF
 
-    fun addImageToPDF(item:Uri){
-        application.contentResolver.query(item,null,null,null,null)?.let {cursor->
+    fun addImageToPDF(item: Uri) {
+        application.contentResolver.query(item, null, null, null, null)?.let { cursor ->
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
             cursor.moveToFirst()
-            _listImageToPDF.add(ImageFile(item.toString(),cursor.getString(nameIndex),cursor.getLong(sizeIndex).toString()))
+            _listImageToPDF.add(
+                ImageFile(
+                    item.toString(),
+                    cursor.getString(nameIndex),
+                    cursor.getLong(sizeIndex).toString()
+                )
+            )
             cursor.close()
         }
 
+    }
+
+    fun optimize7(uri: Uri) {
+//        val origPdf = com.itextpdf.kernel.pdf.PdfDocument(
+//            com.itextpdf.kernel.pdf.PdfReader(
+//                application.contentResolver.openInputStream(uri)
+//            )
+//        )
+//        val primaryExternalStorage = ContextCompat.getExternalFilesDirs(application, null)[0]
+//        val out = File(primaryExternalStorage, "image.jpg")
+//        val origPage: com.itextpdf.kernel.pdf.PdfPage = origPdf.getPage(1)
+//        val pdfCanvas = PdfCanvas(origPage)
+//
+//        val pageCopy: PdfFormXObject = origPage.copyAsFormXObject(pdf)
+//
+////        val image = com.itextpdf.layout.element.Image(pageCopy)
+
+
+    }
+
+    fun SearchTextaaaa() {
+
+        val primaryExternalStorage = ContextCompat.getExternalFilesDirs(application, null)[0]
+        val inpt = File(primaryExternalStorage, "merge.pdf")
+        val out = File(primaryExternalStorage, "merge.pdf")
+        val pdfDoc =
+            com.itextpdf.kernel.pdf.PdfDocument(
+                com.itextpdf.kernel.pdf.PdfReader(
+                    inpt.inputStream()
+                ), com.itextpdf.kernel.pdf.PdfWriter(
+                    out.outputStream()
+                )
+            )
+        val listener = SimplePositionalTextEventListener()
+        PdfCanvasProcessor(listener).processPageContent(pdfDoc.firstPage)
+        val result: List<SimpleTextWithRectangle> = listener.getResultantTextWithPosition()
+
+        var R = 0
+        var G = 0
+        var B = 0
+        Log.d("TEXTS", result.toString())
+        for (textWithRectangle in result) {
+            R += 40
+            R %= 256
+            G += 20
+            G %= 256
+            B += 80
+            B %= 256
+            val canvas = PdfCanvas(pdfDoc.getPage(4))
+            canvas.setStrokeColor(DeviceRgb(R, G, B))
+            canvas.rectangle(textWithRectangle.rectangle)
+            canvas.stroke()
+        }
+//
+//        val reader =PdfReader(inpt.inputStream())
+//        val parser = PdfReaderContentParser(reader)
+//        val a = object :com.itextpdf.text.pdf.parser.TextMarginFinder(){
+//            override fun renderText(renderInfo: com.itextpdf.text.pdf.parser.TextRenderInfo?) {
+//                super.renderText(renderInfo)
+//                if (renderInfo != null) {
+//                    System.out.println(renderInfo.getText() + ", x: " + renderInfo.getBaseline().getBoundingRectange().x + ", y: " + renderInfo.getBaseline().getBoundingRectange().y)
+//                }
+//            }
+//        }
+//        parser.processContent(reader.numberOfPages,a)
+
+        pdfDoc.close()
+    }
+
+
+    private val _pdfPageReorder = mutableStateListOf<String>()
+    val pdfPageReorder: MutableList<String> = _pdfPageReorder
+    private val _indexReorderedPages= mutableListOf<Int>()
+    private val _uriReOrder = MutableStateFlow(Uri.parse(""))
+    private val primaryExternalStorage: File =
+        ContextCompat.getExternalFilesDirs(application, null)[0]
+
+    fun reOrderIndexPages(to:Int,from:Int){
+        _indexReorderedPages.apply {
+            add(to, removeAt(from))
+        }
+    }
+    fun reOrderPages(){
+        viewModelScope.launch(Dispatchers.IO) {
+            val inFile: InputStream? =
+                application.contentResolver.openInputStream(_uriReOrder.value)
+            val reader = PdfReader(inFile)
+//                val n = reader.numberOfPages
+            val outFile = File(primaryExternalStorage, "reorderd.pdf")
+            val document = Document(reader.getPageSizeWithRotation(1))
+            val writer = PdfCopy(document, FileOutputStream(outFile))
+            document.open()
+            for (index in _indexReorderedPages) {
+//            if (_splitPagesSelectState[index]) {
+                val page =
+                    writer.getImportedPage(reader, index + 1) //Page Start from 1 so gotta +1
+                writer.addPage(page)
+//            }
+            }
+            document.close()
+            writer.close()
+        }
+
+    }
+    fun initReorderPage(uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _uriReOrder.update {
+                uri
+            }
+            val reader = PdfReader(application.contentResolver.openInputStream(uri))
+            val pdfiumCore = PdfiumCore(application.applicationContext)
+            val primaryExternalStorage: File =
+                ContextCompat.getExternalFilesDirs(application, null)[0]
+            val pdfDocument: PdfDocument =
+                pdfiumCore.newDocument(application.contentResolver.openFileDescriptor(uri, "r"))
+            for (page in 0 until reader.numberOfPages) {
+                _indexReorderedPages.add(page)
+                _pdfPageReorder.add(
+                    savePDFPageToData(
+                        pdfiumCore,
+                        primaryExternalStorage,
+                        pdfDocument,
+                        page
+                    )
+                )
+            }
+            pdfiumCore.closeDocument(pdfDocument)
+        }
+
+    }
+
+    private fun savePDFPageToData(
+        pdfiumCore: PdfiumCore,
+        primaryExternalStorage: File,
+        pdfDocument: PdfDocument,
+        page: Int
+    ): String {
+        val out = File(primaryExternalStorage, "$page.jpeg")
+        pdfiumCore.openPage(pdfDocument, page)
+        val width = pdfiumCore.getPageWidthPoint(pdfDocument, page) / SCALE_PREVIEW_REORDER
+        val height = pdfiumCore.getPageHeightPoint(pdfDocument, page) / SCALE_PREVIEW_REORDER
+
+        // ARGB_8888 - best quality, high memory usage, higher possibility of OutOfMemoryError
+        // RGB_565 - little worse quality, twice less memory usage
+        val bitmap = Bitmap.createBitmap(
+            width, height,
+            Bitmap.Config.RGB_565
+        )
+        pdfiumCore.renderPageBitmap(
+            pdfDocument, bitmap, page, 0, 0,
+            width, height
+        )
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out.outputStream())
+        return Uri.fromFile(out).toString()
     }
 }
