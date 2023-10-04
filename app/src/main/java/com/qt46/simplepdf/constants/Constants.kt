@@ -20,6 +20,8 @@ const val TOOL_SPLIT_PDF=1
 const val TOOL_IMAGE_TO_PDF=2
 const val TOOL_OPTIMIZE=5
 const val TOOL_REORDER=7
+const val TOOL_EXTRACT_TEXT=6
+const val TOOL_EDIT_META=3
 val items = listOf(
     Screen.Tools,
     Screen.AllPDF,

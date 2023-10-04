@@ -16,17 +16,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -48,6 +54,8 @@ import coil.request.ImageRequest
 import com.qt46.simplepdf.R
 import com.qt46.simplepdf.constants.TOOL_IMAGE_TO_PDF
 import com.qt46.simplepdf.data.ImageFile
+import com.qt46.simplepdf.screens.main.ui.DialogWithTextField
+import com.qt46.simplepdf.screens.main.ui.DragDropColumn
 import org.burnoutcrew.reorderable.ItemPosition
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
@@ -57,22 +65,40 @@ import org.burnoutcrew.reorderable.reorderable
 
 @Composable
 //@Preview(showBackground = true)
-fun ImageToPDFScreen(files:List<ImageFile> = listOf(),onActionClicked:()->Unit,onMove:(ItemPosition,ItemPosition,Int)->Unit){
+fun ImageToPDFScreen(files:List<ImageFile> = listOf(),onActionClicked:(String)->Unit,onSwap:(Int,Int)->Unit,onRemoveIconCLicked:(Int)->Unit,addFile:()->Unit,onBackPressed:()->Unit){
 
-    val state = rememberReorderableLazyListState(onMove = { from, to ->
-        onMove(from,to, TOOL_IMAGE_TO_PDF)
-//        onMove(from,to)
+    val openAlertDialog = remember { mutableStateOf(false) }
+    when {
+        // ...
+        openAlertDialog.value -> {
+            DialogWithTextField(onDismiss = {
+                openAlertDialog.value = false
+            }, onConfirm = {
+                openAlertDialog.value = false
+                onActionClicked(it)
+            }, title = stringResource(id = R.string.input_file_name), placeholder = stringResource(
+                id = R.string.place_holder_filename
+            ))
+        }
+    }
 
-    })
     Column {
         TopAppBar(navigationIcon = {
-            Icon(Icons.Default.ArrowBack, contentDescription = "back")
+            IconButton(onClick = { onBackPressed() }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "back")
+            }
+
         }, actions = {
+            TextButton(onClick = { addFile() }) {
+                androidx.compose.material.Text(text = stringResource(id = R.string.action_add))
+            }
+
+            Spacer(modifier = Modifier.width(9.dp))
             Icon(
-                Icons.Default.CheckCircle,
+                Icons.Default.ArrowForward,
                 contentDescription = "merge icon",
                 modifier = Modifier.clickable {
-                    onActionClicked()
+                    openAlertDialog.value=true
 //                    openAlertDialog.value=true
 
                 })
@@ -84,33 +110,9 @@ fun ImageToPDFScreen(files:List<ImageFile> = listOf(),onActionClicked:()->Unit,o
                 )
             )
         }, backgroundColor = MaterialTheme.colorScheme.background)
-
-        LazyColumn(
-            state = state.listState,
-            modifier = Modifier
-                .reorderable(state)
-                .detectReorderAfterLongPress(state)
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp)
-        ) {
-            itemsIndexed(items = files) { index,item ->
-                ReorderableItem(state, key = item) { isDragging ->
-                    val elevation = animateDpAsState(if (isDragging) 16.dp else 0.dp)
-                    Column(
-                        modifier = Modifier
-                            .shadow(elevation.value)
-                    ) {
-//                        Text(text = item.filename)
-                        ImagePreview(item = item)
-                        if(index<files.lastIndex){
-                            Row (modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.End){
-                                Divider(color = Color.Black, modifier = Modifier
-                                    .fillMaxWidth(.75f)
-                                    .alpha(.3f))
-                            }
-                        }
-                    }
-                }
+        DragDropColumn(items = files, onSwap =onSwap ) { index,item->
+            ImagePreview(item = item){
+                onRemoveIconCLicked(index)
             }
         }
     }
@@ -118,19 +120,21 @@ fun ImageToPDFScreen(files:List<ImageFile> = listOf(),onActionClicked:()->Unit,o
 }
 
 @Composable
-fun ImagePreview(item:ImageFile ){
-    Row(
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically,
+fun ImagePreview(item:ImageFile ,onRemoveIconCLicked: () -> Unit){
+    OutlinedButton(
+        onClick={},
+//        horizontalArrangement = Arrangement.Start,
+//        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+//            .clip(RoundedCornerShape(10.dp))
+    , shape = RoundedCornerShape(10.dp)
     ) {
         Icon(
             Icons.Default.Menu,
             contentDescription = "pdf image"
         )
-        Spacer(modifier = Modifier.width(4.dp))
+        Spacer(modifier = Modifier.width(22.dp))
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(item.uri)
@@ -139,7 +143,9 @@ fun ImagePreview(item:ImageFile ){
             placeholder = painterResource(R.drawable.ic_image),
             contentDescription = stringResource(R.string.all_pdf),
             contentScale = ContentScale.Crop,
-            modifier = Modifier.clip(RoundedCornerShape(5.dp)).requiredSize(70.dp)
+            modifier = Modifier
+                .clip(RoundedCornerShape(5.dp))
+                .requiredSize(70.dp)
         )
         Spacer(modifier = Modifier.width(4.dp))
         Column(modifier = Modifier.fillMaxWidth(0.9f)) {
@@ -160,19 +166,21 @@ fun ImagePreview(item:ImageFile ){
 
 
         }
-
-        Icon(
-            Icons.Default.Close,
-            modifier = Modifier
-                .requiredSize(32.dp)
-                .clickable {
-//                    onRemoveClicked(file)
-                }
-                .clip(CircleShape),
-            tint = MaterialTheme.colorScheme.primary,
-            contentDescription = "pdf image"
-        )
         Spacer(modifier = Modifier.width(4.dp))
+        IconButton(onClick = {
+                onRemoveIconCLicked()
+        }) {
+
+            Icon(
+                Icons.Default.Close,
+                modifier = Modifier
+                    .requiredSize(32.dp)
+                    .clip(CircleShape),
+                tint = MaterialTheme.colorScheme.primary,
+                contentDescription = "pdf image"
+            )
+        }
+        Spacer(modifier = Modifier.width(2.dp))
     }
 
 }

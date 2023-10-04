@@ -4,11 +4,14 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,8 +24,10 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.qt46.simplepdf.R
+import com.qt46.simplepdf.screens.main.ui.DialogWithTextField
 import org.burnoutcrew.reorderable.NoDragCancelledAnimation
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
@@ -53,28 +59,43 @@ import org.burnoutcrew.reorderable.reorderable
 
 @Composable
 
-fun ReOrderPage(images: MutableList<String> ,onActionClicked:()->Unit,onMove:(Int,Int)->Unit ){
+fun ReOrderPage(images: MutableList<String> ,onActionClicked:(String)->Unit,onMove:(Int,Int)->Unit ,onBackPressed:()->Unit){
+    val openAlertDialog = remember { mutableStateOf(false) }
+    when {
+        // ...
+        openAlertDialog.value -> {
+            DialogWithTextField(onDismiss = {
+                openAlertDialog.value = false
+            }, onConfirm = {
+                openAlertDialog.value = false
+                onActionClicked(it)
+            }, title = stringResource(id = R.string.input_file_name), placeholder = stringResource(
+                id = R.string.place_holder_filename
+            ))
+        }
+    }
     Column {
         TopAppBar(navigationIcon = {
-            Icon(Icons.Default.ArrowBack, contentDescription = "back")
+            IconButton(onClick = { onBackPressed() }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "back")
+            }
+
         }, actions = {
-            TextButton(onClick = {  }) {
-                androidx.compose.material.Text(text = stringResource(id = R.string.action_add))
+            IconButton(onClick = { /*TODO*/ }) {
+                Icon(imageVector = Icons.Default.Info, contentDescription = "icon guide")
             }
 
             Spacer(modifier = Modifier.width(9.dp))
-            Icon(
-                Icons.Default.ArrowForward,
-                contentDescription = "merge icon",
-                modifier = Modifier.clickable {
-                    onActionClicked()
-//                    openAlertDialog.value=true
-
-                })
+            androidx.compose.material.IconButton(onClick = { openAlertDialog.value=true }) {
+                Icon(
+                    Icons.Default.ArrowForward,
+                    contentDescription = "merge icon",
+                    )
+            }
             Spacer(modifier = Modifier.width(9.dp))
         }, title = {
             Text(
-                "Merge", color = MaterialTheme.colorScheme.onSurface, style = TextStyle(
+                stringResource(id = R.string.reorder_title), color = MaterialTheme.colorScheme.onSurface, style = TextStyle(
                     fontSize = MaterialTheme.typography.titleMedium.fontSize
                 )
             )
@@ -98,14 +119,17 @@ fun VerticalReorderGrid(images: MutableList<String>,onMove:(Int,Int)->Unit ) {
         columns = GridCells.Adaptive(120.dp),
         state = state.gridState,
         modifier = Modifier
-            .reorderable(state)
-            .background(Color.Green)
+            .reorderable(state),
+        contentPadding = PaddingValues(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement =Arrangement.spacedBy(4.dp)
     ) {
         items(images, { it }) { item ->
             ReorderableItem(state, key = item, defaultDraggingModifier = Modifier) { isDragging ->
                 Surface(
                     modifier = Modifier
-                        .aspectRatio(1f)
+                        .width(120.dp)
+                        .height(160.dp)
                         .background(MaterialTheme.colorScheme.surface),
                     tonalElevation = if (isDragging) 16.dp else 5.dp,
                     shadowElevation = if (isDragging) 16.dp else 5.dp

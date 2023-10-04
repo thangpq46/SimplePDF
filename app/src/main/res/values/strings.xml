@@ -26,4 +26,21 @@
     <string name="action_add">Add</string>
     <string name="action_extract_text">Extract Text</string>
     <string name="action_reorder">Reorder Page</string>
+    <string name="input_page">Select Page</string>
+    <string name="dialog_dismiss">Dismiss</string>
+    <string name="dialog_confirm">Confirm</string>
+    <string name="input_file_name">Filename</string>
+    <string name="place_holder_filename">input filename</string>
+    <string name="reorder_title">Rearrange Pages</string>
+    <string name="title_split">Spit Pages</string>
+    <string name="meta_title">Title</string>
+    <string name="meta_title_err">Title*</string>
+    <string name="meta_author">Author</string>
+    <string name="meta_creator">Creator</string>
+    <string name="meta_producer">Producer</string>
+    <string name="meta_subject">Subject</string>
+    <string name="meta_keyword">Keywords</string>
+    <string name="save">Save</string>
+    <string name="meta_date_mod">Modified Date</string>
+    <string name="meta_date_cre">Created Date</string>
 </resources>

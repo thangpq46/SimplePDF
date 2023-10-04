@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 
 import androidx.compose.material.TopAppBar
@@ -53,6 +54,8 @@ import com.qt46.simplepdf.R
 import com.qt46.simplepdf.constants.TOOL_MERGE_PDF
 import com.qt46.simplepdf.data.PDFFile
 import com.qt46.simplepdf.data.SearchBarStatus
+import com.qt46.simplepdf.screens.main.ui.DialogWithTextField
+import com.qt46.simplepdf.screens.main.ui.DragDropColumn
 import kotlinx.coroutines.flow.StateFlow
 import org.burnoutcrew.reorderable.ItemPosition
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -63,31 +66,29 @@ import org.w3c.dom.Text
 
 @Composable
 fun MergeScreen(files:
-                List<PDFFile> ,onMove:(ItemPosition, ItemPosition,Int)->Unit,onMerge:(String)->Unit,onRemoveClicked:(PDFFile)->Unit,addFile:()->Unit){
+                List<PDFFile> ,onMerge:(String)->Unit,onRemoveClicked:(PDFFile)->Unit,onSwap:(Int,Int)->Unit,onBackPressed:()->Unit,addFile:()->Unit){
 //    val files by data.collectAsState()
 
-    val state = rememberReorderableLazyListState(onMove = { from, to ->
-
-        onMove(from,to, TOOL_MERGE_PDF)
-
-    })
     val openAlertDialog = remember { mutableStateOf(false) }
     when {
         // ...
         openAlertDialog.value -> {
-            AlertDialogWithTextField(
-                onDismissRequest = { openAlertDialog.value = false },
-                onConfirmation = {
-                    openAlertDialog.value = false
-                    onMerge(it)
-                },
-                dialogTitle = "Alert dialog example"
-            )
+            DialogWithTextField(onDismiss = {
+                openAlertDialog.value = false
+            }, onConfirm = {
+                openAlertDialog.value = false
+                onMerge(it)
+            }, title = stringResource(id = R.string.input_file_name), placeholder = stringResource(
+                id = R.string.place_holder_filename
+            ))
         }
     }
     Column {
         TopAppBar(navigationIcon = {
-            Icon(Icons.Default.ArrowBack, contentDescription = "back")
+            IconButton(onClick = { onBackPressed() }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "back")
+            }
+
         }, actions = {
             TextButton(onClick = { addFile() }) {
                 Text(text = stringResource(id = R.string.action_add))
@@ -109,35 +110,12 @@ fun MergeScreen(files:
                 )
             )
         }, backgroundColor = MaterialTheme.colorScheme.background)
-        LazyColumn(
-            state = state.listState,
-            modifier = Modifier
-                .reorderable(state)
-                .detectReorderAfterLongPress(state)
+
+        DragDropColumn(items = files, onSwap = onSwap) { _, item->
+            FileMerge(modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp)
-        ) {
-            itemsIndexed(items = files) { index,item ->
-                ReorderableItem(state, key = item) { isDragging ->
-                    val elevation = animateDpAsState(if (isDragging) 16.dp else 0.dp)
-                    Column(
-                        modifier = Modifier
-                            .shadow(elevation.value)
-                    ) {
-//                        Text(text = item.filename)
-                        FileMerge(modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp)).detectReorderAfterLongPress(state),file = item, onRemoveClicked =  onRemoveClicked)
-                        if(index<files.lastIndex){
-                            Row (modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.End){
-                                Divider(color = Color.Black, modifier = Modifier
-                                    .fillMaxWidth(.75f)
-                                    .alpha(.3f))
-                            }
-                        }
-                    }
-                }
-            }
+                .clip(RoundedCornerShape(10.dp))
+                ,file = item, onRemoveClicked =  onRemoveClicked)
         }
     }
 }
@@ -210,7 +188,7 @@ fun FileMerge(modifier: Modifier=Modifier,file:PDFFile,onRemoveClicked: (PDFFile
 
 
 @Composable
-    fun SelectFileMergeScreen(files:StateFlow<List<PDFFile>>, SearchBarStatus: StateFlow<SearchBarStatus>,searchTextState:StateFlow<String>, filesToMerge:List<PDFFile>, onClick:(PDFFile)->Unit,onSearchIconClick:()->Unit,onTextChange:(String)->Unit,onClose:()->Unit){
+    fun SelectFileMergeScreen(files:StateFlow<List<PDFFile>>, SearchBarStatus: StateFlow<SearchBarStatus>,searchTextState:StateFlow<String>, filesToMerge:List<PDFFile>, onClick:(PDFFile)->Unit,onSearchIconClick:()->Unit,onTextChange:(String)->Unit,onClose:()->Unit,onBackPressed: () -> Unit){
     val pdfFiles by files.collectAsState()
     val searchState by SearchBarStatus.collectAsState()
     val textSearch by searchTextState.collectAsState()
@@ -223,7 +201,8 @@ fun FileMerge(modifier: Modifier=Modifier,file:PDFFile,onRemoveClicked: (PDFFile
             onSearchIconClick = onSearchIconClick,
             textSearch,
             onTextChange,
-            onClose
+            onClose,
+            onBackPressed
         )
 
         LazyColumn(
@@ -294,49 +273,4 @@ fun FileSelect(file:PDFFile,isSelected:Boolean,onClick: (PDFFile) -> Unit){
         }
 
     }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun AlertDialogWithTextField(
-    onDismissRequest: () -> Unit={},
-    onConfirmation: (String) -> Unit={},
-    dialogTitle: String="File Name",
-) {
-    var filename by remember {
-        mutableStateOf("Merge 12231231")
-    }
-    AlertDialog(
-        icon = {
-            Icon(painterResource(id = R.drawable.ic_edit), contentDescription = "Example Icon")
-        },
-        title = {
-            Text(text = dialogTitle)
-        },
-        text = {
-            TextField(value = filename, onValueChange ={filename=it} )
-        },
-        onDismissRequest = {
-            onDismissRequest()
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirmation(filename)
-                }
-            ) {
-                Text("Confirm")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onDismissRequest()
-                }
-            ) {
-                Text("Dismiss")
-            }
-        }
-    )
 }

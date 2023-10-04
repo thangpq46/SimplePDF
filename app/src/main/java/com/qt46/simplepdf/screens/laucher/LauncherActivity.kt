@@ -19,7 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
-import com.example.compose.SimplePDFTheme
+import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 import com.qt46.simplepdf.screens.main.MainActivity
 
 const val PERMISSION_REQUEST_CODE = 0

@@ -42,7 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.example.compose.SimplePDFTheme
+import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 import com.github.barteksc.pdfviewer.PDFView
 import com.qt46.simplepdf.R
 import kotlinx.coroutines.flow.StateFlow
