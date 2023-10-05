@@ -14,4 +14,6 @@ sealed class Screen(val route: String, @StringRes val resourceId: Int,@DrawableR
     object ImageToPDF : Screen("imgtopdf", R.string.merge,R.drawable.ic_more)
     object ReOrderPage : Screen("reorder", R.string.merge,R.drawable.ic_more)
     object EditMetaData : Screen("metadata", R.string.merge,R.drawable.ic_more)
+
+    object Optimize : Screen("optimize", R.string.merge,R.drawable.ic_more)
 }

@@ -15,12 +15,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
-import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 import com.qt46.simplepdf.screens.main.MainActivity
+import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 
 const val PERMISSION_REQUEST_CODE = 0
 
@@ -50,7 +48,7 @@ class LauncherActivity : ComponentActivity() {
 
                         ActivityCompat.requestPermissions(
                             this,
-                            arrayOf<String>(WRITE_EXTERNAL_STORAGE),
+                            arrayOf(WRITE_EXTERNAL_STORAGE),
                             PERMISSION_REQUEST_CODE
                         )
                     } }) {
@@ -59,21 +57,5 @@ class LauncherActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SimplePDFTheme {
-        Greeting("Android")
     }
 }

@@ -3,7 +3,6 @@ package com.qt46.simplepdf.screens.main
 import android.app.Application
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
@@ -46,7 +45,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -55,7 +53,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
-import java.util.Date
 import kotlin.random.Random
 
 
@@ -79,7 +76,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     fun changeIndexFilesMerge(from: Int, to: Int) {
         viewModelScope.launch {
-                    _filesToMerge.add(to, _filesToMerge.removeAt(from))
+            _filesToMerge.add(to, _filesToMerge.removeAt(from))
         }
     }
 
@@ -112,15 +109,13 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         mergePdfFiles(lis, outfile.outputStream())
     }
 
-    @Throws(Exception::class)
-    fun mergePdfFiles(
-        inputPdfList: List<InputStream>,
-        outputStream: OutputStream
+    private fun mergePdfFiles(
+        inputPdfList: List<InputStream>, outputStream: OutputStream
     ) {
 
         //Create document and pdfReader objects.
         val document = Document()
-        val readers: MutableList<PdfReader> = ArrayList<PdfReader>()
+        val readers: MutableList<PdfReader> = ArrayList()
         var totalPages = 0
 
         //Create pdf Iterator object using inputPdfList.
@@ -165,7 +160,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         outputStream.flush()
         document.close()
         outputStream.close()
-        println("Pdf files merged successfully.")
     }
 
 
@@ -204,8 +198,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         val primaryExternalStorage = ContextCompat.getExternalFilesDirs(application, null)[0]
         val out = File(primaryExternalStorage, "optimize.pdf")
         val stamper = PdfStamper(reader, out.outputStream())
-        //PdfWriter writer = stamper.wr
-        //PdfWriter writer = stamper.wr
         reader.removeFields()
         reader.removeUnusedObjects()
 
@@ -227,22 +219,21 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         val byteBuffer = ByteArrayOutputStream()
         val bufferSize = 1024
         val buffer = ByteArray(bufferSize)
-        var len = 0
+        var len: Int
         while (inputStream.read(buffer).also { len = it } != -1) {
             byteBuffer.write(buffer, 0, len)
         }
         return byteBuffer.toByteArray()
     }
 
-    fun imageToPdf(filename:String="image") {
+    fun imageToPdf(filename: String = "image") {
         viewModelScope.launch(Dispatchers.IO) {
             val document = Document()
             val primaryExternalStorage = ContextCompat.getExternalFilesDirs(application, null)[0]
             val out = File(primaryExternalStorage, "$filename.pdf")
 
             PdfWriter.getInstance(
-                document,
-                out.outputStream()
+                document, out.outputStream()
             ) //  Change pdf's name.
 
 
@@ -253,8 +244,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                         ?.let { getBytes(it) }) // Change image's name and extension.
 
 
-                val scaler: Float = (document.pageSize.width - document.leftMargin()
-                        - document.rightMargin() - 0) / image.width * 100 // 0 means you have no indentation. If you have any, change it.
+                val scaler: Float =
+                    (document.pageSize.width - document.leftMargin() - document.rightMargin() - 0) / image.width * 100 // 0 means you have no indentation. If you have any, change it.
 
                 image.scalePercent(scaler)
                 image.alignment = Image.ALIGN_CENTER or Image.ALIGN_TOP
@@ -273,8 +264,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             val reader = PdfReader(application.contentResolver.openInputStream(uri))
             val n: Int = reader.numberOfPages
             for (i in 0 until n) {
-                parsedText =
-                    """
+                parsedText = """
             $parsedText${PdfTextExtractor.getTextFromPage(reader, i + 1).trim { it <= ' ' }}
             
             """.trimIndent() //Extracting the content from the different pages
@@ -291,8 +281,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText
 
-    private val _pdfFilesFilter = mutableStateListOf<PDFFile>()
-
     @OptIn(FlowPreview::class)
     val pdfFilters = searchText.debounce(1000L).combine(_pdfFiles) { text, files ->
         if (text.isBlank()) {
@@ -303,9 +291,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             }
         }
     }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        _pdfFiles.value
+        viewModelScope, SharingStarted.WhileSubscribed(5000), _pdfFiles.value
     )
 
     fun loadAllPDF() {
@@ -345,8 +331,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             if (cursor.moveToFirst()) {
                 do {
                     val fileUri = Uri.withAppendedPath(
-                        MediaStore.Files.getContentUri("external"),
-                        cursor.getString(idCol)
+                        MediaStore.Files.getContentUri("external"), cursor.getString(idCol)
                     )
                     val dateModified = cursor.getLong(modifiedCol)
                     _pdfFiles.update {
@@ -385,9 +370,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     private fun convertLongToDate(time: Long): String =
         DateTimeFormatter.ofPattern("dd MMMM yyyy").format(
-            Instant.ofEpochMilli(time * 1000)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
+            Instant.ofEpochMilli(time * 1000).atZone(ZoneId.systemDefault()).toLocalDate()
         )
 
     fun selectFile(item: PDFFile) {
@@ -409,26 +392,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private val _splitPagesSelectState = mutableStateListOf<Boolean>()
     val splitPagesSelectState: List<Boolean> = _splitPagesSelectState
 
-    private fun openFile(file: File?): ParcelFileDescriptor? {
-        val descriptor: ParcelFileDescriptor = try {
-            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
-        } catch (e: FileNotFoundException) {
-            e.printStackTrace()
-            return null
-        }
-        return descriptor
-    }
-
     fun changePageState(index: Int) {
         _splitPagesSelectState[index] = !_splitPagesSelectState[index]
-    }
-
-    fun searchText(text: String) {
-        val inFile: InputStream? =
-            application.contentResolver.openInputStream(_splitUri.value)
-        println("Reading $inFile")
-        val reader = PdfReader(inFile)
-
     }
 
     private val _listImageToPDF = mutableStateListOf<ImageFile>()
@@ -451,37 +416,18 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     }
 
-    fun optimize7(uri: Uri) {
-//        val origPdf = com.itextpdf.kernel.pdf.PdfDocument(
-//            com.itextpdf.kernel.pdf.PdfReader(
-//                application.contentResolver.openInputStream(uri)
-//            )
-//        )
-//        val primaryExternalStorage = ContextCompat.getExternalFilesDirs(application, null)[0]
-//        val out = File(primaryExternalStorage, "image.jpg")
-//        val origPage: com.itextpdf.kernel.pdf.PdfPage = origPdf.getPage(1)
-//        val pdfCanvas = PdfCanvas(origPage)
-//
-//        val pageCopy: PdfFormXObject = origPage.copyAsFormXObject(pdf)
-//
-////        val image = com.itextpdf.layout.element.Image(pageCopy)
-
-
-    }
-
     fun SearchTextaaaa() {
 
         val primaryExternalStorage = ContextCompat.getExternalFilesDirs(application, null)[0]
         val inpt = File(primaryExternalStorage, "merge.pdf")
         val out = File(primaryExternalStorage, "merge.pdf")
-        val pdfDoc =
-            com.itextpdf.kernel.pdf.PdfDocument(
-                com.itextpdf.kernel.pdf.PdfReader(
-                    inpt.inputStream()
-                ), com.itextpdf.kernel.pdf.PdfWriter(
-                    out.outputStream()
-                )
+        val pdfDoc = com.itextpdf.kernel.pdf.PdfDocument(
+            com.itextpdf.kernel.pdf.PdfReader(
+                inpt.inputStream()
+            ), com.itextpdf.kernel.pdf.PdfWriter(
+                out.outputStream()
             )
+        )
 
         val listener = SimplePositionalTextEventListener()
         PdfCanvasProcessor(listener).processPageContent(pdfDoc.firstPage)
@@ -503,18 +449,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             canvas.rectangle(textWithRectangle.rectangle)
             canvas.stroke()
         }
-//
-//        val reader =PdfReader(inpt.inputStream())
-//        val parser = PdfReaderContentParser(reader)
-//        val a = object :com.itextpdf.text.pdf.parser.TextMarginFinder(){
-//            override fun renderText(renderInfo: com.itextpdf.text.pdf.parser.TextRenderInfo?) {
-//                super.renderText(renderInfo)
-//                if (renderInfo != null) {
-//                    System.out.println(renderInfo.getText() + ", x: " + renderInfo.getBaseline().getBoundingRectange().x + ", y: " + renderInfo.getBaseline().getBoundingRectange().y)
-//                }
-//            }
-//        }
-//        parser.processContent(reader.numberOfPages,a)
+
 
         pdfDoc.close()
     }
@@ -522,17 +457,18 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     private val _pdfPageReorder = mutableStateListOf<String>()
     val pdfPageReorder: MutableList<String> = _pdfPageReorder
-    private val _indexReorderedPages= mutableListOf<Int>()
+    private val _indexReorderedPages = mutableListOf<Int>()
     private val _uriReOrder = MutableStateFlow(Uri.parse(""))
     private val primaryExternalStorage: File =
         ContextCompat.getExternalFilesDirs(application, null)[0]
 
-    fun reOrderIndexPages(to:Int,from:Int){
+    fun reOrderIndexPages(to: Int, from: Int) {
         _indexReorderedPages.apply {
             add(to, removeAt(from))
         }
     }
-    fun reOrderPages(filename: String){
+
+    fun reOrderPages(filename: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val inFile: InputStream? =
                 application.contentResolver.openInputStream(_uriReOrder.value)
@@ -544,8 +480,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             document.open()
             for (index in _indexReorderedPages) {
 //            if (_splitPagesSelectState[index]) {
-                val page =
-                    writer.getImportedPage(reader, index + 1) //Page Start from 1 so gotta +1
+                val page = writer.getImportedPage(reader, index + 1) //Page Start from 1 so gotta +1
                 writer.addPage(page)
 //            }
             }
@@ -572,55 +507,15 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 _splitPagesSelectState.add(false)
                 _splitPages.add(
                     savePDFPageToData(
-                        pdfiumCore,
-                        primaryExternalStorage,
-                        pdfDocument,
-                        page
+                        pdfiumCore, primaryExternalStorage, pdfDocument, page
                     )
                 )
             }
             pdfiumCore.closeDocument(pdfDocument)
-//            val primaryExternalStorage = ContextCompat.getExternalFilesDirs(application, null)[0]
-//            val out = File(primaryExternalStorage, "merge.pdf")
-//            val reader = PdfReader(application.contentResolver.openInputStream(uri))
-//            for (i in 0 until reader.numberOfPages) {
-//                getBitmap(out, i)?.let {
-//                    _splitPages.add(it.asImageBitmap())
-//                    _splitPagesSelectState.add(false)
-//                }
-//            }
-            Log.d("A","A")
         }
 
     }
 
-    private fun getBitmap(file: File?, page: Int): Bitmap? {
-        val pdfiumCore = PdfiumCore(application.applicationContext)
-//        try {
-        val pdfDocument: PdfDocument = pdfiumCore.newDocument(openFile(file))
-        pdfiumCore.openPage(pdfDocument, page)
-        val width = pdfiumCore.getPageWidthPoint(pdfDocument, page)
-        val height = pdfiumCore.getPageHeightPoint(pdfDocument, page)
-
-
-        // ARGB_8888 - best quality, high memory usage, higher possibility of OutOfMemoryError
-        // RGB_565 - little worse quality, twice less memory usage
-        val bitmap = Bitmap.createBitmap(
-            width, height,
-            Bitmap.Config.RGB_565
-        )
-        pdfiumCore.renderPageBitmap(
-            pdfDocument, bitmap, page, 0, 0,
-            width, height
-        )
-        //if you need to render annotations and form fields, you can use
-        //the same method above adding 'true' as last param
-        pdfiumCore.closeDocument(pdfDocument) // important!
-        return bitmap
-//        } catch (ex: IOException) {
-//            ex.printStackTrace()
-//        }
-    }
     fun initReorderPage(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             _uriReOrder.update {
@@ -636,10 +531,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 _indexReorderedPages.add(page)
                 _pdfPageReorder.add(
                     savePDFPageToData(
-                        pdfiumCore,
-                        primaryExternalStorage,
-                        pdfDocument,
-                        page
+                        pdfiumCore, primaryExternalStorage, pdfDocument, page
                     )
                 )
             }
@@ -649,10 +541,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     private fun savePDFPageToData(
-        pdfiumCore: PdfiumCore,
-        primaryExternalStorage: File,
-        pdfDocument: PdfDocument,
-        page: Int
+        pdfiumCore: PdfiumCore, primaryExternalStorage: File, pdfDocument: PdfDocument, page: Int
     ): String {
         val out = File(primaryExternalStorage, "$page.jpeg")
         pdfiumCore.openPage(pdfDocument, page)
@@ -662,21 +551,20 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         // ARGB_8888 - best quality, high memory usage, higher possibility of OutOfMemoryError
         // RGB_565 - little worse quality, twice less memory usage
         val bitmap = Bitmap.createBitmap(
-            width, height,
-            Bitmap.Config.RGB_565
+            width, height, Bitmap.Config.RGB_565
         )
         pdfiumCore.renderPageBitmap(
-            pdfDocument, bitmap, page, 0, 0,
-            width, height
+            pdfDocument, bitmap, page, 0, 0, width, height
         )
         bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out.outputStream())
         return Uri.fromFile(out).toString()
     }
 
-    fun removeImage(index: Int){
+    fun removeImage(index: Int) {
         _listImageToPDF.removeAt(index)
     }
 
+    private val _metaUri = MutableStateFlow(Uri.parse(""))
     private val _metaTitle = MutableStateFlow("")
     val metaTitle = _metaTitle.asStateFlow()
     private val _metaAuthor = MutableStateFlow("")
@@ -684,110 +572,150 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private val _metaCreator = MutableStateFlow("")
     val metaCreator = _metaCreator.asStateFlow()
     private val _metaProducer = MutableStateFlow("")
-     val metaProducer = _metaProducer.asStateFlow()
+    val metaProducer = _metaProducer.asStateFlow()
     private val _metaKeywords = MutableStateFlow("")
-     val metaKeywords = _metaKeywords.asStateFlow()
+    val metaKeywords = _metaKeywords.asStateFlow()
     private val _metaSubject = MutableStateFlow("")
     val metaSubject = _metaSubject.asStateFlow()
-    private val _metaCreationDate = MutableStateFlow(Calendar.getInstance().set(2001,4,6))
+    private val _metaCreationDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
     val metaCreationDate = _metaCreationDate.asStateFlow()
-    fun initMetaData(uri: Uri){
+    fun initMetaData(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
-            val document: PDDocument = PDDocument.load(application.contentResolver.openInputStream(uri))
+            _metaUri.update {
+                uri
+            }
+            val document: PDDocument =
+                PDDocument.load(application.contentResolver.openInputStream(uri))
             val info = document.documentInformation
             _metaTitle.update {
-                if (info.title==null){
+                if (info.title == null) {
                     ""
-                }else{
+                } else {
                     info.title
                 }
 
             }
             _metaAuthor.update {
-                if (info.author==null){
+                if (info.author == null) {
                     ""
-                }else{
+                } else {
                     info.author
                 }
 
             }
             _metaCreator.update {
-                if (info.creator==null){
+                if (info.creator == null) {
                     ""
-                }else{
+                } else {
                     info.creator
                 }
 
             }
             _metaProducer.update {
-                if (info.producer==null){
+                if (info.producer == null) {
                     ""
-                }else{
+                } else {
                     info.producer
                 }
 
             }
             _metaKeywords.update {
-                if (info.keywords==null){
+                if (info.keywords == null) {
                     ""
-                }else{
+                } else {
                     info.keywords
                 }
 
             }
             _metaSubject.update {
-                if (info.subject==null){
+                if (info.subject == null) {
                     ""
-                }else{
+                } else {
                     info.subject
                 }
 
             }
             _metaCreationDate.update {
-//                if (info.creationDate==null){
-//                    ""
-//                }else{
-//                    info.creationDate
-//                }
+                if (info.creationDate == null) {
+                    Calendar.getInstance().timeInMillis
+                } else {
+                    info.creationDate.timeInMillis
+                }
 
             }
         }
     }
-    fun updateMetaDate(date: Calendar){
+
+    fun updateMetaDate(date: Long) {
         _metaCreationDate.update {
             date
         }
     }
-    fun updateTitle(text:String){
+
+    fun updateTitle(text: String) {
         _metaTitle.update {
             text
         }
     }
 
-    fun updateAuthor(text:String){
+    fun updateAuthor(text: String) {
         _metaAuthor.update {
             text
         }
     }
 
-    fun updateCreator(text:String){
+    fun updateCreator(text: String) {
         _metaAuthor.update {
             text
         }
     }
-    fun updateProducer(text:String){
+
+    fun updateProducer(text: String) {
         _metaProducer.update {
             text
         }
     }
-    fun updateSubject(text:String){
+
+    fun updateSubject(text: String) {
         _metaSubject.update {
             text
         }
     }
-    fun updateKeywords(text:String){
+
+    fun updateKeywords(text: String) {
         _metaKeywords.update {
             text
         }
+    }
+
+    fun saveMetaData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val document: PDDocument =
+                PDDocument.load(application.contentResolver.openInputStream(_metaUri.value))
+            val info = document.documentInformation
+            info.author = _metaAuthor.value
+            info.creator = _metaCreator.value
+            info.keywords = _metaKeywords.value
+            info.subject = _metaSubject.value
+            info.title = _metaTitle.value
+            info.producer = _metaProducer.value
+            val calendar = Calendar.getInstance()
+            calendar.timeInMillis = _metaCreationDate.value
+            info.creationDate = calendar
+////            val baos = ByteArrayOutputStrea
+////            dm()
+            val out = File(primaryExternalStorage, "meta.pdf")
+            document.documentInformation = info
+
+//            val outStream= application.contentResolver.openOutputStream(_metaUri.value,"w")
+//            outStream?.let {
+            document.save(out.outputStream())
+//                it.close()
+//            }
+            document.close()
+
+        }
+
+
     }
 }

@@ -67,12 +67,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 import com.qt46.simplepdf.R
 import com.qt46.simplepdf.constants.TOOL_BROWSE_PDF
 import com.qt46.simplepdf.constants.TOOL_EDIT_META
@@ -88,28 +88,43 @@ import com.qt46.simplepdf.data.PDFFile
 import com.qt46.simplepdf.data.Screen
 import com.qt46.simplepdf.data.SearchBarStatus
 import com.qt46.simplepdf.screens.main.ui.EditMetaDataUI
+import com.qt46.simplepdf.screens.main.ui.OptimizePDFUI
 import com.qt46.simplepdf.screens.pdfviewer.PDFViewer
-
-const val PICK_PDF_FILE = 2
+import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()
     private var toolSelected = TOOL_MERGE_PDF
+
+    private fun NavOptionsBuilder.popUpToTop(navController: NavController) {
+        popUpTo(navController.currentBackStackEntry?.destination?.route ?: return) {
+            inclusive = true
+        }
+    }
+
+    private lateinit var navController2: NavHostController
+
     private val selectImagesActivityResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
 
                 val data: Intent? = result.data
+
                 //If multiple image selected
                 if (data?.clipData != null) {
-
                     val count = data.clipData?.itemCount ?: 0
 //                    val list = mutableListOf<Uri>()
-                    for (i in 0 until count) {
-                        data.clipData?.getItemAt(i)?.uri?.let {
-                            viewModel.addImageToPDF(it)
+                    when (toolSelected) {
+                        TOOL_IMAGE_TO_PDF -> {
+                            navController2.navigate(Screen.ImageToPDF.route)
+                            for (i in 0 until count) {
+                                data.clipData?.getItemAt(i)?.uri?.let {
+                                    viewModel.addImageToPDF(it)
+                                }
+                            }
                         }
                     }
+
 //                    viewModel.merge(list)
                 }
                 //If single image selected
@@ -117,40 +132,61 @@ class MainActivity : ComponentActivity() {
 
                     val imageUri: Uri? = data.data
                     imageUri?.let {
-                        when(toolSelected){
-                            TOOL_SPLIT_PDF->{
+                        when (toolSelected) {
+                            TOOL_SPLIT_PDF -> {
+                                navController2.navigate(Screen.SplitFile.route)
                                 viewModel.initPreviewSplit(it)
                             }
-                            TOOL_REORDER->{
+
+                            TOOL_REORDER -> {
+                                navController2.navigate(Screen.ReOrderPage.route)
                                 viewModel.initReorderPage(it)
                             }
-                            TOOL_EXTRACT_TEXT->{
+
+                            TOOL_EXTRACT_TEXT -> {
                                 viewModel.extractText(it)
                             }
-                            TOOL_EDIT_META->{
+
+                            TOOL_EDIT_META -> {
+                                navController2.navigate(Screen.EditMetaData.route)
                                 viewModel.initMetaData(it)
                             }
-                        }
-//                        viewModel.imageToPdf(it)
-//
 
-//                            viewModel.optimize(it)
+                            TOOL_OPTIMIZE -> {
+                                navController2.navigate(Screen.Optimize.route)
+                                viewModel.optimize(it)
+                            }
+
+                            TOOL_IMAGE_TO_PDF -> {
+                                navController2.navigate(Screen.ImageToPDF.route)
+                                viewModel.addImageToPDF(it)
+                            }
+
+                            TOOL_BROWSE_PDF -> {
+                                startActivity(
+                                    Intent(
+                                        this@MainActivity,
+                                        PDFViewer::class.java
+                                    ).apply {
+                                        putExtra("uri_doc", it.toString())
+                                    })
+                            }
+                        }
                     }
                 }
             }
 
         }
-    fun NavOptionsBuilder.popUpToTop(navController: NavController) {
-        popUpTo(navController.currentBackStackEntry?.destination?.route ?: return) {
-            inclusive =  true
-        }
-    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.loadAllPDF()
         setContent {
+            val navController = rememberNavController()
+            navController2 = navController
+
             SimplePDFTheme {
-                val navController = rememberNavController()
+
 
                 Scaffold(modifier = Modifier
                     .background(MaterialTheme.colorScheme.background),
@@ -177,8 +213,11 @@ class MainActivity : ComponentActivity() {
                                     onClick = {
                                         navController.navigate(screen.route) {
                                             this.popUpToTop(navController)
-                                            popUpTo(navController.currentBackStackEntry?.destination?.route ?: return@navigate) {
-                                                inclusive =  true
+                                            popUpTo(
+                                                navController.currentBackStackEntry?.destination?.route
+                                                    ?: return@navigate
+                                            ) {
+                                                inclusive = true
                                             }
                                             // Pop up to the start destination of the graph to
                                             // avoid building up a large stack of destinations
@@ -212,46 +251,64 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     TOOL_SPLIT_PDF -> {
-                                        navController.navigate(Screen.SplitFile.route)
-                                        toolSelected= TOOL_SPLIT_PDF
+                                        toolSelected = TOOL_SPLIT_PDF
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                                             type = "application/pdf"
                                         })
                                     }
-                                    TOOL_REORDER->{
-                                        toolSelected= TOOL_REORDER
+
+                                    TOOL_REORDER -> {
+                                        toolSelected = TOOL_REORDER
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                                             type = "application/pdf"
                                         })
-                                        navController.navigate(Screen.ReOrderPage.route)
+
                                     }
+
                                     TOOL_IMAGE_TO_PDF -> {
+                                        toolSelected = TOOL_IMAGE_TO_PDF
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
                                             type = "image/*"
                                         })
-                                        navController.navigate(Screen.ImageToPDF.route)
+
                                     }
-                                    TOOL_EXTRACT_TEXT->{
-                                        toolSelected= TOOL_EXTRACT_TEXT
+
+                                    TOOL_EXTRACT_TEXT -> {
+                                        toolSelected = TOOL_EXTRACT_TEXT
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                                             type = "application/pdf"
                                         })
                                     }
-                                    TOOL_BROWSE_PDF -> openFile()
+
+                                    TOOL_BROWSE_PDF -> {
+                                        toolSelected = TOOL_BROWSE_PDF
+                                        selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
+                                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                                            type = "application/pdf"
+                                        })
+//                                        openFile()
+                                    }
+
                                     TOOL_OPTIMIZE -> {
-                                        navController.navigate("allPDF")
-                                    }
-                                    TOOL_EDIT_META->{
-                                        toolSelected= TOOL_EDIT_META
+                                        toolSelected = TOOL_OPTIMIZE
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                                             type = "application/pdf"
                                         })
-                                        navController.navigate(Screen.EditMetaData.route)
+
+                                    }
+
+                                    TOOL_EDIT_META -> {
+                                        toolSelected = TOOL_EDIT_META
+                                        selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
+                                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                                            type = "application/pdf"
+                                        })
+
                                     }
                                 }
                             }
@@ -263,14 +320,13 @@ class MainActivity : ComponentActivity() {
 
                             Column {
                                 MainAppBar(
-                                    stringResource(id = R.string.all_pdf)
-                                    ,
+                                    stringResource(id = R.string.all_pdf),
                                     searchState,
                                     onSearchIconClick = viewModel::openSearchBar,
                                     textSearch,
                                     viewModel::filter,
                                     viewModel::closeSearchBar
-                                ){
+                                ) {
                                     navController.popBackStack()
                                 }
                                 Spacer(modifier = Modifier.height(9.dp))
@@ -304,7 +360,7 @@ class MainActivity : ComponentActivity() {
                                 viewModel.filesToMerge,
                                 viewModel::merge,
                                 viewModel::removeFileMerge,
-                                viewModel::changeIndexFilesMerge,{
+                                viewModel::changeIndexFilesMerge, {
                                     navController.popBackStack()
                                 }
                             ) {
@@ -321,28 +377,54 @@ class MainActivity : ComponentActivity() {
                                 viewModel::openSearchBar,
                                 viewModel::filter,
                                 viewModel::closeSearchBar
-                            ){
+                            ) {
                                 navController.popBackStack()
                             }
 
                         }
-                        composable(Screen.SplitFile.route){
-                            SplitScreen(viewModel.splitPages,viewModel.splitPagesSelectState,viewModel::splitPdf,viewModel::changePageState){
+                        composable(Screen.SplitFile.route) {
+                            SplitScreen(
+                                viewModel.splitPages,
+                                viewModel.splitPagesSelectState,
+                                viewModel::splitPdf,
+                                viewModel::changePageState
+                            ) {
                                 navController.popBackStack()
                             }
                         }
-                        composable(Screen.ImageToPDF.route){
-                            ImageToPDFScreen(viewModel.listImageToPDF,viewModel::imageToPdf,viewModel::changeIndexFilesImage, addFile = this@MainActivity::addImage, onRemoveIconCLicked =  viewModel::removeImage){
+                        composable(Screen.ImageToPDF.route) {
+                            ImageToPDFScreen(
+                                viewModel.listImageToPDF,
+                                viewModel::imageToPdf,
+                                viewModel::changeIndexFilesImage,
+                                addFile = {
+                                    selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
+                                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                                        type = "image/*"
+                                    })
+                                },
+                                onRemoveIconCLicked = viewModel::removeImage
+                            ) {
                                 navController.popBackStack()
                             }
                         }
-                        composable(Screen.ReOrderPage.route){
-                            ReOrderPage(images = viewModel.pdfPageReorder,viewModel::reOrderPages,viewModel::reOrderIndexPages){
+                        composable(Screen.ReOrderPage.route) {
+                            ReOrderPage(
+                                images = viewModel.pdfPageReorder,
+                                viewModel::reOrderPages,
+                                viewModel::reOrderIndexPages
+                            ) {
                                 navController.popBackStack()
                             }
                         }
-                        composable(Screen.EditMetaData.route){
-                            EditMetaDataUI(viewModel)
+                        composable(Screen.EditMetaData.route) {
+                            EditMetaDataUI(viewModel) {
+                                navController.popBackStack()
+                            }
+                        }
+                        composable(Screen.Optimize.route) {
+
+                            OptimizePDFUI()
                         }
                     }
                 }
@@ -350,39 +432,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
-    fun addImage(){
-        selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
-            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            type = "image/*"
-        })
-    }
-    private fun openFile() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/pdf"
-
-        }
-
-        startActivityForResult(intent, PICK_PDF_FILE)
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(
-        requestCode: Int, resultCode: Int, resultData: Intent?
-    ) {
-
-        if (requestCode == PICK_PDF_FILE
-            && resultCode == Activity.RESULT_OK
-        ) {
-            resultData?.data?.also { uri ->
-                startActivity(Intent(this@MainActivity, PDFViewer::class.java).apply {
-                    putExtra("uri_doc", uri.toString())
-                })
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, resultData)
-    }
 
     private fun onClick(file: PDFFile) {
         startActivity(Intent(this@MainActivity, PDFViewer::class.java).apply {
@@ -428,7 +477,7 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
                                 .padding(vertical = 10.dp),
                             painter = painterResource(id = tool.resourceID),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = stringResource(id = tool.toolNameID),
@@ -516,17 +565,17 @@ fun PDFPreview(
                 }
 
             }
-            Icon(
-                modifier = Modifier
-                    .requiredSize(32.dp)
-                    .padding(start = 10.dp)
-                    .clickable {
+            IconButton(onClick = { /*TODO*/ }) {
+                Icon(
+                    modifier = Modifier
+                        .requiredSize(32.dp)
+                        .padding(start = 10.dp),
+                    painter = painterResource(id = R.drawable.ic_more),
+                    tint = MaterialTheme.colorScheme.primary,
+                    contentDescription = "pdf image"
+                )
+            }
 
-                    },
-                painter = painterResource(id = R.drawable.ic_more),
-                tint = MaterialTheme.colorScheme.primary,
-                contentDescription = "pdf image"
-            )
         }
 
     }
@@ -536,23 +585,23 @@ fun PDFPreview(
 //@Preview
 fun MainAppBar(
 
-    title:String,
+    title: String,
     searchState: SearchBarStatus = SearchBarStatus.CLOSED,
     onSearchIconClick: () -> Unit = {},
     textSearch: String,
     onTextChange: (String) -> Unit,
     onClose: () -> Unit,
-    onBackPress:()->Unit
+    onBackPress: () -> Unit
 ) {
     if (searchState == SearchBarStatus.CLOSED) {
-        DefaultAppBar(title,onSearchIconClick,onBackPress)
+        DefaultAppBar(title, onSearchIconClick, onBackPress)
     } else {
         SearchAppBar(textSearch, onTextChange, onTextChange, onClose)
     }
 }
 
 @Composable
-fun DefaultAppBar(title: String,onSearchIconClick: () -> Unit,onBackPress:()->Unit) {
+fun DefaultAppBar(title: String, onSearchIconClick: () -> Unit, onBackPress: () -> Unit) {
     TopAppBar(navigationIcon = {
         IconButton(onClick = { onBackPress() }) {
             Icon(Icons.Default.ArrowBack, contentDescription = "back")

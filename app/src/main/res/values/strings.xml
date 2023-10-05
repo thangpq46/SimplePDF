@@ -43,4 +43,5 @@
     <string name="save">Save</string>
     <string name="meta_date_mod">Modified Date</string>
     <string name="meta_date_cre">Created Date</string>
+    <string name="tools_extract_img">Extract Image</string>
 </resources>

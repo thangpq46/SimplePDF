@@ -35,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.qt46.simplepdf.R
 import com.qt46.simplepdf.screens.main.MainViewModel
@@ -44,8 +43,8 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Preview
-fun EditMetaDataUI(viewModel: MainViewModel= androidx.lifecycle.viewmodel.compose.viewModel()){
+
+fun EditMetaDataUI(viewModel: MainViewModel= androidx.lifecycle.viewmodel.compose.viewModel(),onBackPressed:()->Unit){
 
     val title by viewModel.metaTitle.collectAsState()
     val author by viewModel.metaAuthor.collectAsState()
@@ -53,7 +52,7 @@ fun EditMetaDataUI(viewModel: MainViewModel= androidx.lifecycle.viewmodel.compos
     val producer by viewModel.metaProducer.collectAsState()
     val subject by viewModel.metaSubject.collectAsState()
     val keywords by viewModel.metaKeywords.collectAsState()
-//    val createdDate by viewModel.metaCreationDate.collectAsState()
+    val createdDate by viewModel.metaCreationDate.collectAsState()
     val calendar = android.icu.util.Calendar.getInstance()
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = calendar.timeInMillis,
@@ -65,7 +64,7 @@ fun EditMetaDataUI(viewModel: MainViewModel= androidx.lifecycle.viewmodel.compos
     var selectedDate by remember {
         mutableLongStateOf(calendar.timeInMillis) // or use mutableStateOf(calendar.timeInMillis)
     }
-    val formatter = SimpleDateFormat("dd MMMM yyyy", Locale.ROOT)
+    val formatter = SimpleDateFormat("dd MM yyyy", Locale.ROOT)
     Scaffold(modifier = Modifier
         .background(MaterialTheme.colorScheme.background), topBar = {
         TopAppBar(
@@ -78,7 +77,7 @@ fun EditMetaDataUI(viewModel: MainViewModel= androidx.lifecycle.viewmodel.compos
                 )
             },
             navigationIcon = {
-                IconButton(onClick = { /* doSomething() */ }) {
+                IconButton(onClick = onBackPressed) {
                     Icon(
                         imageVector = Icons.Filled.ArrowBack,
                         contentDescription = "Localized description"
@@ -86,7 +85,7 @@ fun EditMetaDataUI(viewModel: MainViewModel= androidx.lifecycle.viewmodel.compos
                 }
             },
             actions = {
-                TextButton(onClick = { /* doSomething() */ }) {
+                TextButton(onClick = viewModel::saveMetaData) {
                     Text(text = stringResource(id = R.string.save))
                 }
             }
@@ -139,33 +138,33 @@ fun EditMetaDataUI(viewModel: MainViewModel= androidx.lifecycle.viewmodel.compos
                     leadingIconId = R.drawable.ic_keywords,
                     charLimit=200,
                 )
-//                TextField(modifier = Modifier
-//                    .fillMaxWidth(),value = formatter.format(createdDate), onValueChange = {}, enabled = false,leadingIcon = {
-//
-//                    Icon(Icons.Default.DateRange, null)
-//                }, label = {
-//                           Text(text = stringResource(id = R.string.meta_date_mod))
-//                },
-//                    trailingIcon = {
-//                        IconButton(onClick = { showDatePicker=true }) {
-//                            Icon(Icons.Default.DateRange, null)
-//                        }
-//
-//                    })
-//                Spacer(modifier = Modifier.height(18.dp))
-//                TextField(modifier = Modifier
-//                    .fillMaxWidth(),value = formatter.format(createdDate), onValueChange = {}, enabled = false,leadingIcon = {
-//
-//                    Icon(Icons.Default.DateRange, null)
-//                }, label = {
-//                    Text(text = stringResource(id = R.string.meta_date_cre))
-//                },
-//                    trailingIcon = {
-//                        IconButton(onClick = { showDatePicker=true }) {
-//                            Icon(Icons.Default.DateRange, null)
-//                        }
-//
-//                    })
+                TextField(modifier = Modifier
+                    .fillMaxWidth(),value = formatter.format(createdDate), onValueChange = {}, enabled = false,leadingIcon = {
+
+                    Icon(Icons.Default.DateRange, null)
+                }, label = {
+                           Text(text = stringResource(id = R.string.meta_date_mod))
+                },
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker=true }) {
+                            Icon(Icons.Default.DateRange, null)
+                        }
+
+                    })
+                Spacer(modifier = Modifier.height(18.dp))
+                TextField(modifier = Modifier
+                    .fillMaxWidth(),value = formatter.format(createdDate), onValueChange = {}, enabled = false,leadingIcon = {
+
+                    Icon(Icons.Default.DateRange, null)
+                }, label = {
+                    Text(text = stringResource(id = R.string.meta_date_cre))
+                },
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker=true }) {
+                            Icon(Icons.Default.DateRange, null)
+                        }
+
+                    })
                 if (showDatePicker){
                     DatePickerDialog(
                         onDismissRequest = {
@@ -175,6 +174,7 @@ fun EditMetaDataUI(viewModel: MainViewModel= androidx.lifecycle.viewmodel.compos
                             TextButton(onClick = {
                                 showDatePicker = false
                                 selectedDate = datePickerState.selectedDateMillis!!
+                                viewModel.updateMetaDate(selectedDate)
                             }) {
                                 Text(text = "Confirm")
                             }
