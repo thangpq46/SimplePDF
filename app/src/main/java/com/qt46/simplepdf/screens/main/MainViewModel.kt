@@ -156,7 +156,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             currentPdfReaderPage = 1
         }
 
-        //Close document and outputStream.
         outputStream.flush()
         document.close()
         outputStream.close()
