@@ -48,4 +48,5 @@
     <string name="alert_permission_denied">Application can\'t function without permission. Please grand permission to continue.</string>
     <string name="ask_permission">We need permission for the app to work properly.</string>
     <string name="dialog_grand">Grand</string>
+    <string name="stared">Starred</string>
 </resources>

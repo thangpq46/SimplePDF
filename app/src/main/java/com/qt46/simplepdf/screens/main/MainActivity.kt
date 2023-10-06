@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -56,6 +57,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -474,15 +477,20 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
                         containerColor = Color.Transparent
                     )
                 ) {
-                    Column {
-                        Icon(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(vertical = 10.dp),
-                            painter = painterResource(id = tool.resourceID),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                            Icon(
+
+                                painter = painterResource(id = tool.resourceID),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondary,
+                                        modifier = Modifier
+                                        .requiredSize(55.dp)
+                                    .background(tool.color, CircleShape)
+                                    .padding(vertical = 10.dp)
+                            )
+
+
                         Text(
                             text = stringResource(id = tool.toolNameID),
                             textAlign = TextAlign.Center,
