@@ -34,7 +34,7 @@ val items = listOf(
     Screen.More
 )
 const val SCALE_PREVIEW_REORDER=4
-val firaSansFamily = FontFamily(
+val FiraSansFamily = FontFamily(
     Font(R.font.youngrerifregular, FontWeight.Normal),
 
 )

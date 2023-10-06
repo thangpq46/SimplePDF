@@ -107,7 +107,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private lateinit var navController2: NavHostController
+    private lateinit var navController: NavHostController
 
     private val selectImagesActivityResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -121,7 +121,7 @@ class MainActivity : ComponentActivity() {
 //                    val list = mutableListOf<Uri>()
                     when (toolSelected) {
                         TOOL_IMAGE_TO_PDF -> {
-                            navController2.navigate(Screen.ImageToPDF.route)
+                            navController.navigate(Screen.ImageToPDF.route)
                             for (i in 0 until count) {
                                 data.clipData?.getItemAt(i)?.uri?.let {
                                     viewModel.addImageToPDF(it)
@@ -139,12 +139,12 @@ class MainActivity : ComponentActivity() {
                     imageUri?.let {
                         when (toolSelected) {
                             TOOL_SPLIT_PDF -> {
-                                navController2.navigate(Screen.SplitFile.route)
+                                navController.navigate(Screen.SplitFile.route)
                                 viewModel.initPreviewSplit(it)
                             }
 
                             TOOL_REORDER -> {
-                                navController2.navigate(Screen.ReOrderPage.route)
+                                navController.navigate(Screen.ReOrderPage.route)
                                 viewModel.initReorderPage(it)
                             }
 
@@ -153,17 +153,17 @@ class MainActivity : ComponentActivity() {
                             }
 
                             TOOL_EDIT_META -> {
-                                navController2.navigate(Screen.EditMetaData.route)
+                                navController.navigate(Screen.EditMetaData.route)
                                 viewModel.initMetaData(it)
                             }
 
                             TOOL_OPTIMIZE -> {
-                                navController2.navigate(Screen.Optimize.route)
+                                navController.navigate(Screen.Optimize.route)
                                 viewModel.optimize(it)
                             }
 
                             TOOL_IMAGE_TO_PDF -> {
-                                navController2.navigate(Screen.ImageToPDF.route)
+                                navController.navigate(Screen.ImageToPDF.route)
                                 viewModel.addImageToPDF(it)
                             }
 
@@ -187,8 +187,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         viewModel.loadAllPDF()
         setContent {
-            val navController = rememberNavController()
-            navController2 = navController
+            navController = rememberNavController()
 
             SimplePDFTheme {
 

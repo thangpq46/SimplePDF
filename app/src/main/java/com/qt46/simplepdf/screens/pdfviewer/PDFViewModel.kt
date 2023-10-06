@@ -32,12 +32,5 @@ class PDFViewModel(private val application: Application) : AndroidViewModel(appl
         }
     }
 
-    val openDialog =MutableStateFlow(false)
-    val message = MutableStateFlow("")
-    val editMessage = MutableStateFlow("")
-
-
-
-
 
 }

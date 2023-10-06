@@ -167,7 +167,7 @@ fun PDFView(
             }
             if (openDialog){
                 var text by remember {
-                    mutableStateOf("1")
+                    mutableStateOf("")
                 }
                 AlertDialog(
                     icon = {
@@ -188,7 +188,7 @@ fun PDFView(
                         }, modifier = Modifier
                             .padding(top = 10.dp, start = 25.dp, end = 25.dp)
                             .fillMaxWidth(), textStyle = MaterialTheme.typography.bodyMedium, placeholder = {
-                            Text(text = "1 to$pdfPageCount")
+                            Text(text = "Select from 1 to $pdfPageCount")
                         }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number) )
                     },
                     confirmButton = {

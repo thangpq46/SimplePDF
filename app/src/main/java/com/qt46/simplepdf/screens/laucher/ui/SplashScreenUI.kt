@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.qt46.simplepdf.R
-import com.qt46.simplepdf.constants.firaSansFamily
+import com.qt46.simplepdf.constants.FiraSansFamily
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -104,7 +104,7 @@ fun SplashScreen(shouldShowRationale: () -> Unit = {}, onHasPermission: () -> Un
             style = TextStyle(
                 fontWeight = FontWeight.Normal,
                 fontSize = MaterialTheme.typography.titleLarge.fontSize,
-                fontFamily = firaSansFamily
+                fontFamily = FiraSansFamily
             ),
 
             )
