@@ -88,7 +88,12 @@ import com.qt46.simplepdf.data.PDFFile
 import com.qt46.simplepdf.data.Screen
 import com.qt46.simplepdf.data.SearchBarStatus
 import com.qt46.simplepdf.screens.main.ui.EditMetaDataUI
+import com.qt46.simplepdf.screens.main.ui.ImageToPDFScreen
+import com.qt46.simplepdf.screens.main.ui.MergeScreen
 import com.qt46.simplepdf.screens.main.ui.OptimizePDFUI
+import com.qt46.simplepdf.screens.main.ui.ReOrderPage
+import com.qt46.simplepdf.screens.main.ui.SelectFileMergeScreen
+import com.qt46.simplepdf.screens.main.ui.SplitScreen
 import com.qt46.simplepdf.screens.pdfviewer.PDFViewer
 import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 

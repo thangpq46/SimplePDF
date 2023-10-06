@@ -1,5 +1,8 @@
 package com.qt46.simplepdf.constants
 
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import com.qt46.simplepdf.R
 import com.qt46.simplepdf.data.Screen
 import com.qt46.simplepdf.ui.theme.Tool
@@ -31,3 +34,7 @@ val items = listOf(
     Screen.More
 )
 const val SCALE_PREVIEW_REORDER=4
+val firaSansFamily = FontFamily(
+    Font(R.font.youngrerifregular, FontWeight.Normal),
+
+)

@@ -1,4 +1,4 @@
-package com.qt46.simplepdf.screens.main
+package com.qt46.simplepdf.screens.main.ui
 
 
 import androidx.compose.foundation.clickable

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SimplePDF</string>
+    <string name="app_name">Simple PDF</string>
     <string name="tool_merge">Merger PDF</string>
     <string name="tool_split">Split</string>
     <string name="tool_image">Image to PDF</string>
@@ -44,4 +44,8 @@
     <string name="meta_date_mod">Modified Date</string>
     <string name="meta_date_cre">Created Date</string>
     <string name="tools_extract_img">Extract Image</string>
+    <string name="permission_require">Permission Require</string>
+    <string name="alert_permission_denied">Application can\'t function without permission. Please grand permission to continue.</string>
+    <string name="ask_permission">We need permission for the app to work properly.</string>
+    <string name="dialog_grand">Grand</string>
 </resources>
