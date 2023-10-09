@@ -30,7 +30,7 @@
     <string name="dialog_dismiss">Dismiss</string>
     <string name="dialog_confirm">Confirm</string>
     <string name="input_file_name">Filename</string>
-    <string name="place_holder_filename">input filename</string>
+    <string name="place_holder_filename">Input Filename</string>
     <string name="reorder_title">Rearrange Pages</string>
     <string name="title_split">Spit Pages</string>
     <string name="meta_title">Title</string>
@@ -43,10 +43,13 @@
     <string name="save">Save</string>
     <string name="meta_date_mod">Modified Date</string>
     <string name="meta_date_cre">Created Date</string>
-    <string name="tools_extract_img">Extract Image</string>
+    <string name="tools_extract_img">Extract as Image</string>
     <string name="permission_require">Permission Require</string>
     <string name="alert_permission_denied">Application can\'t function without permission. Please grand permission to continue.</string>
     <string name="ask_permission">We need permission for the app to work properly.</string>
     <string name="dialog_grand">Grand</string>
     <string name="stared">Starred</string>
+    <string name="save_success">Save Successfully</string>
+    <string name="save_location">File saved to: Download/%1$s.</string>
+    <string name="cant_find_tool">Can\'t find what you looking for? Tell Us!</string>
 </resources>

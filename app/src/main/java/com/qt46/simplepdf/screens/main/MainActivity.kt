@@ -1,5 +1,6 @@
 package com.qt46.simplepdf.screens.main
 
+import LoadingScreen
 import android.app.Activity
 import android.content.Intent
 import android.content.Intent.ACTION_GET_CONTENT
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -38,11 +38,13 @@ import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
+import androidx.compose.material.TextButton
 import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -57,8 +59,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -79,6 +79,7 @@ import androidx.navigation.compose.rememberNavController
 import com.qt46.simplepdf.R
 import com.qt46.simplepdf.constants.TOOL_BROWSE_PDF
 import com.qt46.simplepdf.constants.TOOL_EDIT_META
+import com.qt46.simplepdf.constants.TOOL_EXTRACT_IMAGE
 import com.qt46.simplepdf.constants.TOOL_EXTRACT_TEXT
 import com.qt46.simplepdf.constants.TOOL_IMAGE_TO_PDF
 import com.qt46.simplepdf.constants.TOOL_MERGE_PDF
@@ -89,8 +90,12 @@ import com.qt46.simplepdf.constants.items
 import com.qt46.simplepdf.constants.tools
 import com.qt46.simplepdf.data.PDFFile
 import com.qt46.simplepdf.data.Screen
+import com.qt46.simplepdf.data.ScreenState
 import com.qt46.simplepdf.data.SearchBarStatus
+import com.qt46.simplepdf.screens.main.ui.BottomDialog
 import com.qt46.simplepdf.screens.main.ui.EditMetaDataUI
+import com.qt46.simplepdf.screens.main.ui.ExtractImageUI
+import com.qt46.simplepdf.screens.main.ui.ExtractTextScreen
 import com.qt46.simplepdf.screens.main.ui.ImageToPDFScreen
 import com.qt46.simplepdf.screens.main.ui.MergeScreen
 import com.qt46.simplepdf.screens.main.ui.OptimizePDFUI
@@ -152,7 +157,8 @@ class MainActivity : ComponentActivity() {
                             }
 
                             TOOL_EXTRACT_TEXT -> {
-                                viewModel.extractText(it)
+                                navController.navigate(Screen.ExtractText.route)
+                                viewModel.initExtractText(it)
                             }
 
                             TOOL_EDIT_META -> {
@@ -179,12 +185,19 @@ class MainActivity : ComponentActivity() {
                                         putExtra("uri_doc", it.toString())
                                     })
                             }
+                            TOOL_EXTRACT_IMAGE->{
+                                navController.navigate(Screen.ExtractImage.route)
+                                viewModel.initExtractImage(it)
+
+                            }
                         }
                     }
                 }
             }
 
         }
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -193,8 +206,8 @@ class MainActivity : ComponentActivity() {
             navController = rememberNavController()
 
             SimplePDFTheme {
-
-
+                val screenState by viewModel.screenState.collectAsState()
+                val notification by viewModel.notification.collectAsState()
                 Scaffold(modifier = Modifier
                     .background(MaterialTheme.colorScheme.background),
                     bottomBar = {
@@ -220,12 +233,6 @@ class MainActivity : ComponentActivity() {
                                     onClick = {
                                         navController.navigate(screen.route) {
                                             this.popUpToTop(navController)
-                                            popUpTo(
-                                                navController.currentBackStackEntry?.destination?.route
-                                                    ?: return@navigate
-                                            ) {
-                                                inclusive = true
-                                            }
                                             // Pop up to the start destination of the graph to
                                             // avoid building up a large stack of destinations
                                             // on the back stack as users select items
@@ -282,7 +289,13 @@ class MainActivity : ComponentActivity() {
                                         })
 
                                     }
-
+                                    TOOL_EXTRACT_IMAGE->{
+                                        toolSelected = TOOL_EXTRACT_IMAGE
+                                        selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
+                                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                                            type = "application/pdf"
+                                        })
+                                    }
                                     TOOL_EXTRACT_TEXT -> {
                                         toolSelected = TOOL_EXTRACT_TEXT
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
@@ -313,6 +326,7 @@ class MainActivity : ComponentActivity() {
                                         toolSelected = TOOL_EDIT_META
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or  Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                                             type = "application/pdf"
                                         })
 
@@ -399,6 +413,14 @@ class MainActivity : ComponentActivity() {
                                 navController.popBackStack()
                             }
                         }
+                        composable(Screen.ExtractImage.route) {
+                            ExtractImageUI(
+                                viewModel.extractPages,
+                                viewModel::extractImage
+                            ) {
+                                navController.popBackStack()
+                            }
+                        }
                         composable(Screen.ImageToPDF.route) {
                             ImageToPDFScreen(
                                 viewModel.listImageToPDF,
@@ -433,12 +455,39 @@ class MainActivity : ComponentActivity() {
 
                             OptimizePDFUI()
                         }
+                        composable(Screen.ExtractText.route){
+                            ExtractTextScreen(viewModel.extractTextPages,viewModel.extractTextPagesState, onActionClicked =viewModel::extractText, onClickPage = viewModel::changePreviewExtractTextPage){
+                                navController.popBackStack()
+                            }
+                        }
                     }
                 }
+                when(screenState){
+                    ScreenState.LOADING->{
+                        LoadingScreen()
+                    }
+                    ScreenState.NOTIFICATION->{
+                        BottomDialog(
+                            dialogTitle = notification.title,
+                            dialogText = notification.detail,
+                            onConfirmation = this::dismissNotification
+                        )
+
+                    }
+
+                    else -> {}
+                }
+
             }
         }
     }
 
+
+    private fun dismissNotification(){
+        viewModel.dismissNotification()
+        viewModel.clearCache()
+        navController.popBackStack()
+    }
 
     private fun onClick(file: PDFFile) {
         startActivity(Intent(this@MainActivity, PDFViewer::class.java).apply {
@@ -467,7 +516,7 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp, horizontal = 12.dp)
-                .fillMaxHeight(.8f)
+                .fillMaxHeight(.5f)
         ) {
             itemsIndexed(tools) { index, tool ->
                 // Replace this with your item composable
@@ -485,9 +534,9 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSecondary,
                                         modifier = Modifier
-                                        .requiredSize(55.dp)
-                                    .background(tool.color, CircleShape)
-                                    .padding(vertical = 10.dp)
+                                            .requiredSize(55.dp)
+                                            .background(tool.color, CircleShape)
+                                            .padding(vertical = 10.dp)
                             )
 
 
@@ -503,6 +552,11 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
 
 
             }
+        }
+        TextButton(onClick = { /*TODO*/ }, modifier = Modifier.fillMaxWidth()) {
+            Icon(Icons.Default.Search, contentDescription =null )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = stringResource(id = R.string.cant_find_tool), style = MaterialTheme.typography.bodyLarge)
         }
     }
 

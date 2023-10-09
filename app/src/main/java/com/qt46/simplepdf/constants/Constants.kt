@@ -9,8 +9,8 @@ import com.qt46.simplepdf.data.Screen
 import com.qt46.simplepdf.ui.theme.Tool
 
 val tools = listOf(
-    Tool(R.drawable.ic_merge, R.string.tool_merge,Color(0xFF448657)),
-    Tool(R.drawable.ic_split, R.string.tool_split,Color(0xFF792323)),
+    Tool(R.drawable.ic_merge, R.string.tool_merge,Color(0xFF67BE80)),
+    Tool(R.drawable.ic_split, R.string.tool_split,Color(0xFFCA4646)),
     Tool(R.drawable.ic_image_to_pdf, R.string.tool_image,Color(0xFF6B471D)),
     Tool(R.drawable.ic_edit, R.string.tool_edit,Color(0xFF606425)),
     Tool(R.drawable.ic_browse, R.string.tool_browse,Color(0xFF30835C)),
@@ -27,6 +27,7 @@ const val TOOL_OPTIMIZE=5
 const val TOOL_REORDER=7
 const val TOOL_EXTRACT_TEXT=6
 const val TOOL_EDIT_META=3
+const val TOOL_EXTRACT_IMAGE = 8
 val items = listOf(
     Screen.AllPDF,
     Screen.Stared,
@@ -38,3 +39,7 @@ val FiraSansFamily = FontFamily(
     Font(R.font.youngrerifregular, FontWeight.Normal),
 
 )
+const val SPLIT_FOLDER="split"
+const val REORDER_FOLDER="reorder"
+const val EX_IMG_FOLDER="reorder"
+const val EX_TXT_FOLDER="reorder"

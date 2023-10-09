@@ -18,4 +18,6 @@ sealed class Screen(val route: String, @StringRes val resourceId: Int,@DrawableR
     object Optimize : Screen("optimize", R.string.merge,R.drawable.ic_more)
 
     object Stared : Screen("stared", R.string.stared,R.drawable.ic_star)
+    object ExtractImage : Screen("extractimg", R.string.stared,R.drawable.ic_star)
+    object ExtractText : Screen("extracttext", R.string.stared,R.drawable.ic_star)
 }

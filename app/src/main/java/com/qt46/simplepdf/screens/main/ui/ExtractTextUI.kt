@@ -1,6 +1,5 @@
 package com.qt46.simplepdf.screens.main.ui
 
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,10 +36,10 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.qt46.simplepdf.R
+import com.qt46.simplepdf.data.PreviewPage
 
 @Composable
-
-fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(),onActionClicked:(String)->Unit={},onClickPage:(Int)->Unit={},onBackPressed:()->Unit){
+fun ExtractTextScreen(pages:List<String> = listOf(),pageStates:List<Boolean> = listOf(),onActionClicked:(String)->Unit={},onClickPage:(Int)->Unit={},onBackPressed:()->Unit){
     val openAlertDialog = remember { mutableStateOf(false) }
     when {
         // ...
@@ -52,7 +51,8 @@ fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(
                 onActionClicked(it)
             }, title = stringResource(id = R.string.input_file_name), placeholder = stringResource(
                 id = R.string.place_holder_filename
-            ))
+            )
+            )
         }
     }
 
@@ -61,7 +61,7 @@ fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(
             IconButton(onClick = { onBackPressed() }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "back")
             }
-            
+
         }, actions = {
             IconButton(onClick = { openAlertDialog.value=true}) {
                 Icon(
@@ -103,7 +103,7 @@ fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(
                         .shadow(16.dp, RoundedCornerShape(10.dp))
                 )
 
-                Checkbox(checked = statePages[index], onCheckedChange = {
+                Checkbox(checked = pageStates[index], onCheckedChange = {
                     onClickPage(index)
                 })
 

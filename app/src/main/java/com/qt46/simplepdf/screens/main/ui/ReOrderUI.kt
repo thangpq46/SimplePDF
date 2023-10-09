@@ -68,7 +68,8 @@ fun ReOrderPage(images: MutableList<String> ,onActionClicked:(String)->Unit,onMo
     }
     Column {
         TopAppBar(navigationIcon = {
-            IconButton(onClick = { onBackPressed() }) {
+            IconButton(onClick = { onBackPressed()
+                images.clear()}) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "back")
             }
 

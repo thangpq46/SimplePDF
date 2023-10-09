@@ -1,6 +1,7 @@
 package com.qt46.simplepdf.screens.main.ui
 
 
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,14 +19,11 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.Checkbox
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
@@ -40,39 +38,25 @@ import com.qt46.simplepdf.R
 
 @Composable
 
-fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(),onActionClicked:(String)->Unit={},onClickPage:(Int)->Unit={},onBackPressed:()->Unit){
-    val openAlertDialog = remember { mutableStateOf(false) }
-    when {
-        // ...
-        openAlertDialog.value -> {
-            DialogWithTextField(onDismiss = {
-                openAlertDialog.value = false
-            }, onConfirm = {
-                openAlertDialog.value = false
-                onActionClicked(it)
-            }, title = stringResource(id = R.string.input_file_name), placeholder = stringResource(
-                id = R.string.place_holder_filename
-            ))
-        }
-    }
+fun ExtractImageUI(pages:List<String> = listOf(),onClickPage:(Int)->Unit={},onBackPressed:()->Unit){
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(navigationIcon = {
             IconButton(onClick = { onBackPressed() }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "back")
             }
-            
+
         }, actions = {
-            IconButton(onClick = { openAlertDialog.value=true}) {
+            IconButton(onClick = { }) {
                 Icon(
-                    Icons.Default.CheckCircle,
+                    Icons.Default.Info,
                     contentDescription = "merge icon",
                 )
             }
 
         }, title = {
             Text(
-                stringResource(id = R.string.title_split), color = MaterialTheme.colorScheme.onSurface, style = TextStyle(
+                stringResource(id = R.string.tools_extract_img), color = MaterialTheme.colorScheme.onSurface, style = TextStyle(
                     fontSize = MaterialTheme.typography.titleMedium.fontSize
                 )
             )
@@ -103,9 +87,6 @@ fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(
                         .shadow(16.dp, RoundedCornerShape(10.dp))
                 )
 
-                Checkbox(checked = statePages[index], onCheckedChange = {
-                    onClickPage(index)
-                })
 
             }
         }
