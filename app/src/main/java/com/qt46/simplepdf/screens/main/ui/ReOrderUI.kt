@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.qt46.simplepdf.R
+import com.qt46.simplepdf.constants.DEFAULT_FILENAME
 import org.burnoutcrew.reorderable.NoDragCancelledAnimation
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
@@ -52,20 +53,6 @@ import org.burnoutcrew.reorderable.reorderable
 @Composable
 
 fun ReOrderPage(images: MutableList<String> ,onActionClicked:(String)->Unit,onMove:(Int,Int)->Unit ,onBackPressed:()->Unit){
-    val openAlertDialog = remember { mutableStateOf(false) }
-    when {
-        // ...
-        openAlertDialog.value -> {
-            DialogWithTextField(onDismiss = {
-                openAlertDialog.value = false
-            }, onConfirm = {
-                openAlertDialog.value = false
-                onActionClicked(it)
-            }, title = stringResource(id = R.string.input_file_name), placeholder = stringResource(
-                id = R.string.place_holder_filename
-            ))
-        }
-    }
     Column {
         TopAppBar(navigationIcon = {
             IconButton(onClick = { onBackPressed()
@@ -79,7 +66,7 @@ fun ReOrderPage(images: MutableList<String> ,onActionClicked:(String)->Unit,onMo
             }
 
             Spacer(modifier = Modifier.width(9.dp))
-            androidx.compose.material.IconButton(onClick = { openAlertDialog.value=true }) {
+            androidx.compose.material.IconButton(onClick = { onActionClicked(DEFAULT_FILENAME) }) {
                 Icon(
                     Icons.Default.ArrowForward,
                     contentDescription = "merge icon",

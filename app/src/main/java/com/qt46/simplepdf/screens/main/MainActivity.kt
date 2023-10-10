@@ -4,6 +4,7 @@ import LoadingScreen
 import android.app.Activity
 import android.content.Intent
 import android.content.Intent.ACTION_GET_CONTENT
+import android.content.Intent.ACTION_OPEN_DOCUMENT
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -168,7 +169,7 @@ class MainActivity : ComponentActivity() {
 
                             TOOL_OPTIMIZE -> {
                                 navController.navigate(Screen.Optimize.route)
-                                viewModel.optimize(it)
+                                viewModel.compressPdf(it)
                             }
 
                             TOOL_IMAGE_TO_PDF -> {
@@ -274,7 +275,7 @@ class MainActivity : ComponentActivity() {
 
                                     TOOL_REORDER -> {
                                         toolSelected = TOOL_REORDER
-                                        selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
+                                        selectImagesActivityResult.launch(Intent(ACTION_OPEN_DOCUMENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                                             type = "application/pdf"
                                         })
@@ -315,7 +316,7 @@ class MainActivity : ComponentActivity() {
 
                                     TOOL_OPTIMIZE -> {
                                         toolSelected = TOOL_OPTIMIZE
-                                        selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
+                                        selectImagesActivityResult.launch(Intent(ACTION_OPEN_DOCUMENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                                             type = "application/pdf"
                                         })
@@ -324,7 +325,7 @@ class MainActivity : ComponentActivity() {
 
                                     TOOL_EDIT_META -> {
                                         toolSelected = TOOL_EDIT_META
-                                        selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
+                                        selectImagesActivityResult.launch(Intent(ACTION_OPEN_DOCUMENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                                             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or  Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                                             type = "application/pdf"

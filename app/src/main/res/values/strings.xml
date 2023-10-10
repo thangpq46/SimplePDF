@@ -52,4 +52,5 @@
     <string name="save_success">Save Successfully</string>
     <string name="save_location">File saved to: Download/%1$s.</string>
     <string name="cant_find_tool">Can\'t find what you looking for? Tell Us!</string>
+    <string name="save_success_detail">Sucessfully. File Saved!</string>
 </resources>

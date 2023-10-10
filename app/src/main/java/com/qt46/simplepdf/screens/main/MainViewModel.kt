@@ -11,7 +11,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.itextpdf.io.source.RandomAccessSourceFactory
 import com.itextpdf.kernel.colors.DeviceRgb
 import com.itextpdf.kernel.pdf.canvas.PdfCanvas
 import com.itextpdf.kernel.pdf.canvas.parser.PdfCanvasProcessor
@@ -26,6 +25,7 @@ import com.itextpdf.text.pdf.PdfStamper
 import com.itextpdf.text.pdf.PdfWriter
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
 import com.qt46.simplepdf.R
+import com.qt46.simplepdf.constants.DEFAULT_FILENAME
 import com.qt46.simplepdf.constants.EX_IMG_FOLDER
 import com.qt46.simplepdf.constants.EX_TXT_FOLDER
 import com.qt46.simplepdf.constants.REORDER_FOLDER
@@ -524,7 +524,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
-    fun reOrderPages(filename: String) {
+    fun reOrderPages(filename: String=DEFAULT_FILENAME) {
         viewModelScope.launch(Dispatchers.IO) {
             _screenState.update {
                 ScreenState.LOADING
@@ -533,9 +533,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 application.contentResolver.openInputStream(_uriReOrder.value)
             val reader = PdfReader(inFile)
 //                val n = reader.numberOfPages
-            val outFile = File(saveLocation, "$filename.pdf")
             val document = Document(reader.getPageSizeWithRotation(1))
-            val writer = PdfCopy(document, FileOutputStream(outFile))
+            val writer = PdfCopy(document, application.contentResolver.openOutputStream(_uriReOrder.value))
             document.open()
             for (index in _indexReorderedPages) {
 //            if (_splitPagesSelectState[index]) {
@@ -547,9 +546,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             writer.close()
 
             _notification.update {
-                Notification(application.getString(R.string.save_success),String.format(application.getString(
-                    R.string.save_location
-                ),"${filename}.pdf"))
+                Notification(application.getString(R.string.save_success),application.getString(
+                    R.string.save_success_detail
+                ))
             }
             _screenState.update {
                 ScreenState.NOTIFICATION
@@ -785,7 +784,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
-    fun saveMetaData(filename: String="meta") {
+    fun saveMetaData() {
         viewModelScope.launch(Dispatchers.IO) {
             _screenState.update {
                 ScreenState.LOADING
@@ -802,26 +801,12 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             val calendar = Calendar.getInstance()
             calendar.timeInMillis = _metaCreationDate.value
             info.creationDate = calendar
-////            val baos = ByteArrayOutputStrea
-////            dm()
-            val out = File(saveLocation, "$filename.pdf")
             document.documentInformation = info
 
-//            val outStream= application.contentResolver.openOutputStream(_metaUri.value,"w")
-//            outStream?.let {
-            document.save(out.outputStream())
-//            application.contentResolver.openOutputStream(_metaUri.value,"w")?.let {
-//                document.save(it)
-//                it.close()
-//
-//            }
-//                it.close()
-//            }
+            document.save(application.contentResolver.openOutputStream(_metaUri.value))
             document.close()
             _notification.update {
-                Notification(application.getString(R.string.save_success),String.format(application.getString(
-                    R.string.save_location
-                ),"${filename}.pdf"))
+                Notification(application.getString(R.string.save_success),application.getString(R.string.save_success_detail))
             }
             _screenState.update {
                 ScreenState.NOTIFICATION
@@ -1006,5 +991,32 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         _extractTextPages.clear()
         _listImageToPDF.clear()
         _pdfPageReorder.clear()
+    }
+
+    @Throws(IOException::class, DocumentException::class)
+    fun compressPdf(uri: Uri) {
+        viewModelScope.launch {
+            _screenState.update {
+                ScreenState.LOADING
+            }
+            val reader = PdfReader(application.contentResolver.openInputStream(uri))
+            val stamper = PdfStamper(reader, application.contentResolver.openOutputStream(uri), PdfWriter.VERSION_1_5)
+            stamper.writer.compressionLevel = 9
+            val total = reader.numberOfPages + 1
+            for (i in 1 until total) {
+                reader.setPageContent(i, reader.getPageContent(i))
+            }
+            stamper.setFullCompression()
+            stamper.close()
+            reader.close()
+
+            _notification.update {
+                Notification(application.getString(R.string.save_success),"Optimize Done")
+            }
+            _screenState.update {
+                ScreenState.NOTIFICATION
+            }
+        }
+
     }
 }
