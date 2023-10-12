@@ -1,6 +1,7 @@
 package com.qt46.simplepdf.screens.pdfviewer
 
 import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -42,9 +43,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 import com.github.barteksc.pdfviewer.PDFView
 import com.qt46.simplepdf.R
+import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 import kotlinx.coroutines.flow.StateFlow
 
 class PDFViewer : ComponentActivity() {
@@ -57,7 +58,11 @@ class PDFViewer : ComponentActivity() {
             viewModel.initData(it)
             setContent {
                 SimplePDFTheme {
-                    PDFView(modifier = Modifier.fillMaxSize(), uri =Uri.parse(it),viewModel.pdfPageCount)
+                    PDFView(
+                        modifier = Modifier.fillMaxSize(),
+                        uri = Uri.parse(it),
+                        viewModel.pdfPageCount
+                    )
                 }
             }
         }
@@ -71,7 +76,7 @@ class PDFViewer : ComponentActivity() {
 fun PDFView(
     modifier: Modifier,
     uri: Uri,
-    pagesizeState:StateFlow<Int>
+    pagesizeState: StateFlow<Int>
 ) {
     var pdf: PDFView? = null
     var openDialog by remember { mutableStateOf(false) }
@@ -85,50 +90,72 @@ fun PDFView(
     val activity = LocalContext.current as Activity
     Scaffold(
         topBar = {
-                 CenterAlignedTopAppBar(title ={
-                     Text(text =  stringResource(id = R.string.title_pdfviewer))
-                 }, navigationIcon = {
-                     IconButton(onClick = {
-                         activity.finish()
-                     }) {
-                         Icon(Icons.Default.ArrowBack, contentDescription = null)
-                     }
-                 }, actions = {
-                     IconButton(onClick = { /*TODO*/ }) {
-                         Icon(Icons.Default.Search, contentDescription = null)
-                     }
+            CenterAlignedTopAppBar(title = {
+                Text(text = stringResource(id = R.string.title_pdfviewer))
+            }, navigationIcon = {
+                IconButton(onClick = {
+                    activity.finish()
+                }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+                }
+            }, actions = {
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(Icons.Default.Search, contentDescription = null)
+                }
 
-                 }, modifier = Modifier.padding(horizontal = 9.dp))
+            }, modifier = Modifier.padding(horizontal = 9.dp))
         },
         bottomBar = {
             BottomAppBar(
                 actions = {
-                    IconButton(onClick = { openDialog=true
-                    doNotUpdate=true
+                    IconButton(onClick = {
+                        openDialog = true
+                        doNotUpdate = true
                     }) {
-                        Icon(painter = painterResource(id = R.drawable.ic_page), contentDescription = "Localized description")
-                        
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_page),
+                            contentDescription = "Localized description"
+                        )
+
                     }
                     IconButton(onClick = {
-                        doNotUpdate=false
-                        nightMode=!nightMode
+                        doNotUpdate = false
+                        nightMode = !nightMode
 
                     }) {
-                        Icon(painter = painterResource(id = R.drawable.ic_nightmode), contentDescription = "Localized description")
-                        
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_nightmode),
+                            contentDescription = "Localized description"
+                        )
+
                     }
                     IconButton(onClick = { /* doSomething() */ }) {
-                        Icon(painter = painterResource(id = R.drawable.ic_rotate), contentDescription = "Localized description")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_rotate),
+                            contentDescription = "Localized description"
+                        )
 
                     }
                 },
                 floatingActionButton = {
                     FloatingActionButton(
-                        onClick = { /* do something */ },
+                        onClick = {
+
+                            val shareIntent: Intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                // Example: content://com.google.android.apps.photos.contentprovider/...
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                type = "application/pdf"
+                            }
+                            activity.startActivity(Intent.createChooser(shareIntent, null))
+                        },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {
-                        Icon(painter = painterResource(id = R.drawable.ic_share), "Localized description")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_share),
+                            "Localized description"
+                        )
                     }
                 }
             )
@@ -151,7 +178,7 @@ fun PDFView(
                         }
                     },
                     update = { pdfView ->
-                        if (!doNotUpdate){
+                        if (!doNotUpdate) {
                             pdf = pdfView
                             pdfView.fromUri(uri)
                                 .enableSwipe(true) // allows to block changing pages using swipe
@@ -165,13 +192,16 @@ fun PDFView(
                     }
                 )
             }
-            if (openDialog){
+            if (openDialog) {
                 var text by remember {
                     mutableStateOf("")
                 }
                 AlertDialog(
                     icon = {
-                           Icon(painter = painterResource(id = R.drawable.ic_edit), contentDescription = "")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_edit),
+                            contentDescription = ""
+                        )
                     },
                     onDismissRequest = {
                         // Dismiss the dialog when the user clicks outside the dialog or on the back
@@ -183,13 +213,19 @@ fun PDFView(
                         Text(text = "Title")
                     },
                     text = {
-                        TextField(value = text, onValueChange = {
-                            text=it
-                        }, modifier = Modifier
-                            .padding(top = 10.dp, start = 25.dp, end = 25.dp)
-                            .fillMaxWidth(), textStyle = MaterialTheme.typography.bodyMedium, placeholder = {
-                            Text(text = "Select from 1 to $pdfPageCount")
-                        }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number) )
+                        TextField(value = text,
+                            onValueChange = {
+                                text = it
+                            },
+                            modifier = Modifier
+                                .padding(top = 10.dp, start = 25.dp, end = 25.dp)
+                                .fillMaxWidth(),
+                            textStyle = MaterialTheme.typography.bodyMedium,
+                            placeholder = {
+                                Text(text = "Select from 1 to $pdfPageCount")
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
                     },
                     confirmButton = {
                         TextButton(
