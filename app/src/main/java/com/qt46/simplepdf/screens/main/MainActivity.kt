@@ -93,6 +93,7 @@ import com.qt46.simplepdf.data.PDFFile
 import com.qt46.simplepdf.data.Screen
 import com.qt46.simplepdf.data.ScreenState
 import com.qt46.simplepdf.data.SearchBarStatus
+import com.qt46.simplepdf.screens.main.ui.AllPDFFiles
 import com.qt46.simplepdf.screens.main.ui.BottomDialog
 import com.qt46.simplepdf.screens.main.ui.EditMetaDataUI
 import com.qt46.simplepdf.screens.main.ui.ExtractImageUI
@@ -103,6 +104,7 @@ import com.qt46.simplepdf.screens.main.ui.OptimizePDFUI
 import com.qt46.simplepdf.screens.main.ui.ReOrderPage
 import com.qt46.simplepdf.screens.main.ui.SelectFileMergeScreen
 import com.qt46.simplepdf.screens.main.ui.SplitScreen
+import com.qt46.simplepdf.screens.main.ui.StaredFiles
 import com.qt46.simplepdf.screens.pdfviewer.PDFViewer
 import com.qt46.simplepdf.ui.theme.SimplePDFTheme
 
@@ -237,9 +239,9 @@ class MainActivity : ComponentActivity() {
                                             // Pop up to the start destination of the graph to
                                             // avoid building up a large stack of destinations
                                             // on the back stack as users select items
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
-                                            }
+//                                            popUpTo(navController.graph.findStartDestination().id) {
+//                                                saveState = true
+//                                            }
                                             // Avoid multiple copies of the same destination when
                                             // reselecting the same item
                                             launchSingleTop = true
@@ -356,25 +358,14 @@ class MainActivity : ComponentActivity() {
                                 AllPDFFiles(
                                     modifier = Modifier.padding(horizontal = 12.dp),
                                     pdfFiles,
-                                    this@MainActivity::onClick
+                                    this@MainActivity::onClick,
+                                    viewModel::addStaredFile
                                 )
                             }
 
                         }
                         composable(Screen.More.route) {
-                            TopAppBar(navigationIcon = {
-                                Spacer(modifier = Modifier.width(9.dp))
-                                Icon(Icons.Default.ArrowBack, contentDescription = "back")
-                            }, title = {
-                                Text(
-                                    "Tools",
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    style = TextStyle(
-                                        fontSize = MaterialTheme.typography.titleMedium.fontSize
-                                    )
-                                )
-                            }, backgroundColor = MaterialTheme.colorScheme.background)
-                            Spacer(modifier = Modifier.height(9.dp))
+                            Setting()
                         }
                         composable(Screen.Merge.route) {
 
@@ -460,6 +451,27 @@ class MainActivity : ComponentActivity() {
                             ExtractTextScreen(viewModel.extractTextPages,viewModel.extractTextPagesState, onActionClicked =viewModel::extractText, onClickPage = viewModel::changePreviewExtractTextPage){
                                 navController.popBackStack()
                             }
+                        }
+                        composable(Screen.Stared.route){
+                            val starFiles by viewModel.staredFiles.collectAsState()
+                            val textSearch by viewModel.searchText.collectAsState()
+                            val searchState by viewModel.searchBarWidgetStatus.collectAsState()
+                            Column {
+
+                                MainAppBar(
+                                    stringResource(id = R.string.all_pdf),
+                                    searchState,
+                                    onSearchIconClick = viewModel::openSearchBar,
+                                    textSearch,
+                                    viewModel::filter,
+                                    viewModel::closeSearchBar
+                                ) {
+                                    navController.popBackStack()
+                                }
+                                Spacer(modifier = Modifier.height(9.dp))
+                                StaredFiles(filtedPDFs =starFiles , onClickItems = this@MainActivity::onClick, onStarClicked = viewModel::addStaredFile)
+                            }
+
                         }
                     }
                 }
@@ -563,90 +575,6 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
 
 }
 
-@Composable
-fun AllPDFFiles(
-    modifier: Modifier = Modifier,
-    filtedPDFs: List<PDFFile>,
-    onClickItems: (PDFFile) -> Unit
-) {
-    Column(modifier = modifier) {
-
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            items(items = filtedPDFs) {
-                PDFPreview(it, onClickItems = onClickItems)
-            }
-        }
-    }
-
-}
-
-
-@Composable
-fun PDFPreview(
-    file: PDFFile = PDFFile("Phan Quang Thang", "ABC", "500", "09/05/2023"),
-    onClickItems: (PDFFile) -> Unit,
-    clickable: Boolean = true
-) {
-    OutlinedButton(
-        modifier = Modifier.fillMaxWidth(),
-        enabled = clickable,
-        onClick = { onClickItems(file) },
-        shape = RoundedCornerShape(10.dp)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                modifier = Modifier
-                    .requiredSize(70.dp),
-                painter = painterResource(id = R.drawable.ic_document),
-                tint = MaterialTheme.colorScheme.primary,
-                contentDescription = "pdf image"
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Column {
-                Text(
-                    text = file.filename,
-                    fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = file.size + "kb",
-                        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                    Text(
-                        text = file.dateModified,
-                        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
-
-            }
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(
-                    modifier = Modifier
-                        .requiredSize(32.dp)
-                        .padding(start = 10.dp),
-                    painter = painterResource(id = R.drawable.ic_more),
-                    tint = MaterialTheme.colorScheme.primary,
-                    contentDescription = "pdf image"
-                )
-            }
-
-        }
-
-    }
-}
 
 @Composable
 //@Preview

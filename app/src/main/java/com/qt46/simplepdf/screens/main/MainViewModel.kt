@@ -34,21 +34,30 @@ import com.qt46.simplepdf.constants.SPLIT_FOLDER
 import com.qt46.simplepdf.data.ImageFile
 import com.qt46.simplepdf.data.Notification
 import com.qt46.simplepdf.data.PDFFile
+import com.qt46.simplepdf.data.PDFFileEntity
+import com.qt46.simplepdf.data.PDFRepository
+import com.qt46.simplepdf.data.PdfDataBase
 import com.qt46.simplepdf.data.ScreenState
 import com.qt46.simplepdf.data.SearchBarStatus
 import com.qt46.simplepdf.data.SimplePositionalTextEventListener
 import com.qt46.simplepdf.data.SimpleTextWithRectangle
+import com.qt46.simplepdf.data.toPDFFileEntity
 import com.shockwave.pdfium.PdfDocument
 import com.shockwave.pdfium.PdfiumCore
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -72,16 +81,16 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     private val _screenState = MutableStateFlow(ScreenState.INDIE)
     val screenState = _screenState.asStateFlow()
-    private val _notification = MutableStateFlow(Notification("",""))
-     val notification = _notification.asStateFlow()
+    private val _notification = MutableStateFlow(Notification("", ""))
+    val notification = _notification.asStateFlow()
     private val _searchBarWidgetStatus = MutableStateFlow(SearchBarStatus.CLOSED)
     val searchBarWidgetStatus = _searchBarWidgetStatus.asStateFlow()
-    private val applicationDir: File =
-        ContextCompat.getExternalFilesDirs(application, null)[0]
+    private val applicationDir: File = ContextCompat.getExternalFilesDirs(application, null)[0]
     private val _filesToMerge = mutableStateListOf<PDFFile>()
     val filesToMerge: List<PDFFile> = _filesToMerge
     private val _splitUri = MutableStateFlow(Uri.parse(""))
-
+    private val repository: PDFRepository =
+        PDFRepository(PdfDataBase.getDatabase(application).pdfDao())
 
     private val _pdfFiles = MutableStateFlow<MutableList<PDFFile>>(mutableListOf())
 
@@ -95,9 +104,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     val splitPagesSelectState: List<Boolean> = _splitPagesSelectState
     private var extractTextUri = Uri.parse("")
     private val _extractTextPages = mutableStateListOf<String>()
-    val extractTextPages :List<String> = _extractTextPages
+    val extractTextPages: List<String> = _extractTextPages
     private val _extractTextPagesState = mutableStateListOf<Boolean>()
-    val extractTextPagesState :List<Boolean> = _extractTextPagesState
+    val extractTextPagesState: List<Boolean> = _extractTextPagesState
 
     fun changePageState(index: Int) {
         _splitPagesSelectState[index] = !_splitPagesSelectState[index]
@@ -114,7 +123,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     fun closeSearchBar() {
         changeSearchBarWidgetStatus(false)
     }
-
 
 
     fun changeIndexFilesMerge(from: Int, to: Int) {
@@ -154,9 +162,13 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             }
             mergePdfFiles(lis, outfile.outputStream())
             _notification.update {
-                Notification(application.getString(R.string.save_success),String.format(application.getString(
-                    R.string.save_location
-                ),"${fileName}.pdf"))
+                Notification(
+                    application.getString(R.string.save_success), String.format(
+                        application.getString(
+                            R.string.save_location
+                        ), "${fileName}.pdf"
+                    )
+                )
             }
             _screenState.update {
                 ScreenState.NOTIFICATION
@@ -245,9 +257,13 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 e.printStackTrace()
             } finally {
                 _notification.update {
-                    Notification(application.getString(R.string.save_success),String.format(application.getString(
-                        R.string.save_location
-                    ),"${filename}.pdf"))
+                    Notification(
+                        application.getString(R.string.save_success), String.format(
+                            application.getString(
+                                R.string.save_location
+                            ), "${filename}.pdf"
+                        )
+                    )
                 }
                 _screenState.update {
                     ScreenState.NOTIFICATION
@@ -265,35 +281,39 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 ScreenState.LOADING
             }
 
-        val reader = PdfReader(application.contentResolver.openInputStream(pdfUri))
-        val out = File(saveLocation, "optimize.pdf")
-        val stamper = PdfStamper(reader, out.outputStream())
-        reader.removeFields()
-        reader.removeUnusedObjects()
+            val reader = PdfReader(application.contentResolver.openInputStream(pdfUri))
+            val out = File(saveLocation, "optimize.pdf")
+            val stamper = PdfStamper(reader, out.outputStream())
+            reader.removeFields()
+            reader.removeUnusedObjects()
 
-        val total = reader.numberOfPages + 1
-        for (i in 1 until total) {
-            reader.setPageContent(i + 1, reader.getPageContent(i + 1))
+            val total = reader.numberOfPages + 1
+            for (i in 1 until total) {
+                reader.setPageContent(i + 1, reader.getPageContent(i + 1))
+            }
+            try {
+                stamper.setFullCompression()
+                stamper.close()
+            } catch (e: DocumentException) {
+                // TODO Auto-generated catch block
+                e.printStackTrace()
+            } finally {
+                _notification.update {
+                    Notification(
+                        application.getString(R.string.save_success), String.format(
+                            application.getString(
+                                R.string.save_location
+                            ), "ptimize.pdf"
+                        )
+                    )
+                }
+                _screenState.update {
+                    ScreenState.NOTIFICATION
+                }
+
+            }
+
         }
-        try {
-            stamper.setFullCompression()
-            stamper.close()
-        } catch (e: DocumentException) {
-            // TODO Auto-generated catch block
-            e.printStackTrace()
-        }finally {
-            _notification.update {
-                Notification(application.getString(R.string.save_success),String.format(application.getString(
-                    R.string.save_location
-                ),"ptimize.pdf"))
-            }
-            _screenState.update {
-                ScreenState.NOTIFICATION
-            }
-
-        }
-
-            }
     }
 
     @Throws(IOException::class)
@@ -339,9 +359,13 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
             document.close()
             _notification.update {
-                Notification(application.getString(R.string.save_success),String.format(application.getString(
-                    R.string.save_location
-                ),"${filename}.pdf"))
+                Notification(
+                    application.getString(R.string.save_success), String.format(
+                        application.getString(
+                            R.string.save_location
+                        ), "${filename}.pdf"
+                    )
+                )
             }
             _screenState.update {
                 ScreenState.NOTIFICATION
@@ -349,8 +373,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
 
     }
-
-
 
 
     @OptIn(FlowPreview::class)
@@ -365,10 +387,33 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000), _pdfFiles.value
     )
+    private val _staredFiles = MutableStateFlow<List<PDFFileEntity>>(listOf())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val staredFiles = combine(_staredFiles, _pdfFiles, searchText) { stars, files, text ->
+        Triple(stars, files, text)
+    }.flatMapLatest { (stars, files, text) ->
+        flow {
+            emit(files.filter { file ->
+                stars.find {
+                    it.filename == file.filename
+                } != null
+            }.filter {
+                it.filename.contains(text, true)
+            })
+
+
+        }
+
+
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf())
+
 
     fun loadAllPDF() {
         viewModelScope.launch(Dispatchers.IO) {
-
+            _screenState.update {
+                ScreenState.LOADING
+            }
             _pdfFiles.update {
                 mutableListOf()
             }
@@ -410,6 +455,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                     _pdfFiles.update {
                         it.add(
                             PDFFile(
+                                cursor.getInt(idCol),
                                 cursor.getString(nameCol),
                                 fileUri.toString(),
                                 cursor.getInt(sizeCol).toString(),
@@ -424,6 +470,26 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 } while (cursor.moveToNext())
             }
             cursor.close()
+            val staredFiles = repository.getStaredFiles()
+            val l = staredFiles.first()
+            _pdfFiles.value = _pdfFiles.value.toMutableList().apply {
+                for (index in this.indices) {
+                    if (l.find {
+                            this[index].filename == it.filename
+                        } != null) {
+                        this[index] = this[index].copy(isStared = true)
+                    }
+                }
+            }
+            _screenState.update {
+                ScreenState.INDIE
+            }
+            staredFiles.collectLatest { starFiles ->
+                _staredFiles.update {
+                    starFiles
+                }
+            }
+
         }
     }
 
@@ -524,7 +590,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
-    fun reOrderPages(filename: String=DEFAULT_FILENAME) {
+    fun reOrderPages(filename: String = DEFAULT_FILENAME) {
         viewModelScope.launch(Dispatchers.IO) {
             _screenState.update {
                 ScreenState.LOADING
@@ -534,7 +600,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             val reader = PdfReader(inFile)
 //                val n = reader.numberOfPages
             val document = Document(reader.getPageSizeWithRotation(1))
-            val writer = PdfCopy(document, application.contentResolver.openOutputStream(_uriReOrder.value))
+            val writer =
+                PdfCopy(document, application.contentResolver.openOutputStream(_uriReOrder.value))
             document.open()
             for (index in _indexReorderedPages) {
 //            if (_splitPagesSelectState[index]) {
@@ -546,9 +613,11 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             writer.close()
 
             _notification.update {
-                Notification(application.getString(R.string.save_success),application.getString(
-                    R.string.save_success_detail
-                ))
+                Notification(
+                    application.getString(R.string.save_success), application.getString(
+                        R.string.save_success_detail
+                    )
+                )
             }
             _screenState.update {
                 ScreenState.NOTIFICATION
@@ -573,15 +642,15 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
             val pdfDocument: PdfDocument =
                 pdfiumCore.newDocument(application.contentResolver.openFileDescriptor(uri, "r"))
-            val saveFolder =File(applicationDir, SPLIT_FOLDER)
-            if (!saveFolder.exists()){
+            val saveFolder = File(applicationDir, SPLIT_FOLDER)
+            if (!saveFolder.exists()) {
                 saveFolder.mkdirs()
             }
             for (page in 0 until reader.numberOfPages) {
                 _splitPagesSelectState.add(false)
                 _splitPages.add(
                     savePDFPageToData(
-                        pdfiumCore, saveFolder , pdfDocument, page
+                        pdfiumCore, saveFolder, pdfDocument, page
                     )
                 )
             }
@@ -605,15 +674,15 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             val pdfiumCore = PdfiumCore(application.applicationContext)
             val pdfDocument: PdfDocument =
                 pdfiumCore.newDocument(application.contentResolver.openFileDescriptor(uri, "r"))
-            val saveFolder =File(applicationDir,REORDER_FOLDER)
-            if (!saveFolder.exists()){
+            val saveFolder = File(applicationDir, REORDER_FOLDER)
+            if (!saveFolder.exists()) {
                 saveFolder.mkdirs()
             }
             for (page in 0 until reader.numberOfPages) {
                 _indexReorderedPages.add(page)
                 _pdfPageReorder.add(
                     savePDFPageToData(
-                        pdfiumCore, saveFolder  , pdfDocument, page
+                        pdfiumCore, saveFolder, pdfDocument, page
                     )
                 )
             }
@@ -626,7 +695,12 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     private fun savePDFPageToData(
-        pdfiumCore: PdfiumCore, primaryExternalStorage: File, pdfDocument: PdfDocument, page: Int,scale:Int=SCALE_PREVIEW_REORDER,quality:Int=80
+        pdfiumCore: PdfiumCore,
+        primaryExternalStorage: File,
+        pdfDocument: PdfDocument,
+        page: Int,
+        scale: Int = SCALE_PREVIEW_REORDER,
+        quality: Int = 80
     ): String {
         val out = File(primaryExternalStorage, "$page.jpeg")
         pdfiumCore.openPage(pdfDocument, page)
@@ -806,7 +880,10 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             document.save(application.contentResolver.openOutputStream(_metaUri.value))
             document.close()
             _notification.update {
-                Notification(application.getString(R.string.save_success),application.getString(R.string.save_success_detail))
+                Notification(
+                    application.getString(R.string.save_success),
+                    application.getString(R.string.save_success_detail)
+                )
             }
             _screenState.update {
                 ScreenState.NOTIFICATION
@@ -815,7 +892,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
 
     }
-
 
 
     fun initExtractImage(uri: Uri) {
@@ -832,14 +908,14 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             val pdfDocument: PdfDocument =
                 pdfiumCore.newDocument(application.contentResolver.openFileDescriptor(uri, "r"))
 
-            val saveFolder =File(applicationDir, EX_IMG_FOLDER)
-            if (!saveFolder.exists()){
+            val saveFolder = File(applicationDir, EX_IMG_FOLDER)
+            if (!saveFolder.exists()) {
                 saveFolder.mkdirs()
             }
             for (page in 0 until reader.numberOfPages) {
                 _extractPages.add(
                     savePDFPageToData(
-                        pdfiumCore, saveFolder , pdfDocument, page
+                        pdfiumCore, saveFolder, pdfDocument, page
                     )
                 )
             }
@@ -858,16 +934,15 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             val pdfiumCore = PdfiumCore(application.applicationContext)
             val pdfDocument: PdfDocument = pdfiumCore.newDocument(
                 application.contentResolver.openFileDescriptor(
-                    _extractUri.value,
-                    "r"
+                    _extractUri.value, "r"
                 )
             )
             println(saveLocation.absolutePath.toString())
-            if(!saveLocation.exists()){
+            if (!saveLocation.exists()) {
                 saveLocation.mkdirs()
             }
             savePDFPageToData(
-                pdfiumCore, saveLocation , pdfDocument, page, scale = 1, quality = 100
+                pdfiumCore, saveLocation, pdfDocument, page, scale = 1, quality = 100
             )
 
             pdfiumCore.closeDocument(pdfDocument)
@@ -877,7 +952,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
-    fun dismissNotification(){
+    fun dismissNotification() {
         viewModelScope.launch {
             _screenState.update {
                 ScreenState.INDIE
@@ -886,7 +961,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
-    fun initExtractText(uri: Uri){
+    fun initExtractText(uri: Uri) {
         viewModelScope.launch {
             extractTextUri = uri
             _screenState.update {
@@ -896,8 +971,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             val pdfiumCore = PdfiumCore(application.applicationContext)
             val pdfDocument: PdfDocument =
                 pdfiumCore.newDocument(application.contentResolver.openFileDescriptor(uri, "r"))
-            val saveFolder =File(applicationDir,EX_TXT_FOLDER)
-            if (!saveFolder.exists()){
+            val saveFolder = File(applicationDir, EX_TXT_FOLDER)
+            if (!saveFolder.exists()) {
                 saveFolder.mkdirs()
             }
             for (page in 0 until reader.numberOfPages) {
@@ -916,11 +991,12 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     }
 
-    fun changePreviewExtractTextPage(index:Int){
-        _extractTextPagesState[index]= !_extractTextPagesState[index]
+    fun changePreviewExtractTextPage(index: Int) {
+        _extractTextPagesState[index] = !_extractTextPagesState[index]
 
 
     }
+
     fun extractText(uri: Uri) {
         try {
             var parsedText = ""
@@ -938,12 +1014,13 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             println(e)
         }
     }
-    fun extractText(filename: String){
+
+    fun extractText(filename: String) {
         viewModelScope.launch {
             _screenState.update {
                 ScreenState.LOADING
             }
-            val out = File(saveLocation,"$filename.txt")
+            val out = File(saveLocation, "$filename.txt")
             withContext(Dispatchers.IO) {
                 BufferedWriter(
                     OutputStreamWriter(
@@ -974,9 +1051,13 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             }
 
             _notification.update {
-                Notification(application.getString(R.string.save_success),String.format(application.getString(
-                    R.string.save_location
-                ),"${filename}.txt"))
+                Notification(
+                    application.getString(R.string.save_success), String.format(
+                        application.getString(
+                            R.string.save_location
+                        ), "${filename}.txt"
+                    )
+                )
             }
             _screenState.update {
                 ScreenState.NOTIFICATION
@@ -984,7 +1065,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
-     fun clearCache(){
+    fun clearCache() {
         _listImageToPDF.clear()
         _splitPages.clear()
         _filesToMerge.clear()
@@ -1000,7 +1081,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 ScreenState.LOADING
             }
             val reader = PdfReader(application.contentResolver.openInputStream(uri))
-            val stamper = PdfStamper(reader, application.contentResolver.openOutputStream(uri), PdfWriter.VERSION_1_5)
+            val stamper = PdfStamper(
+                reader, application.contentResolver.openOutputStream(uri), PdfWriter.VERSION_1_5
+            )
             stamper.writer.compressionLevel = 9
             val total = reader.numberOfPages + 1
             for (i in 1 until total) {
@@ -1011,10 +1094,32 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             reader.close()
 
             _notification.update {
-                Notification(application.getString(R.string.save_success),"Optimize Done")
+                Notification(application.getString(R.string.save_success), "Optimize Done")
             }
             _screenState.update {
                 ScreenState.NOTIFICATION
+            }
+        }
+
+    }
+
+    fun addStaredFile(file: PDFFile) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val searchResult = _staredFiles.value.find {
+                it.filename == file.filename
+            }
+            if (searchResult != null) {
+                repository.removeStarFile(searchResult)
+            } else {
+                repository.addStaredFile(file.toPDFFileEntity())
+            }
+            _pdfFiles.value = _pdfFiles.value.toMutableList().apply {
+                for (index in this.indices) {
+                    if (this[index].filename == file.filename) {
+                        this[index] = this[index].copy(isStared = !this[index].isStared)
+                    }
+                }
+
             }
         }
 
