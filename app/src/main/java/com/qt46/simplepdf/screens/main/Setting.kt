@@ -1,20 +1,38 @@
 package com.qt46.simplepdf.screens.main
 
 
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProvideTextStyle
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,27 +50,25 @@ import com.qt46.simplepdf.constants.OWNER_FACEBOOK
 import com.qt46.simplepdf.constants.OWNER_GMAIL
 import com.qt46.simplepdf.constants.OWNER_INSTAGRAM
 import com.qt46.simplepdf.constants.OWNER_TIKTOK
-import com.qt46.simplepdf.ui.theme.SimplePDFTheme
-
-
-class SettingActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            SimplePDFTheme {
-                // A surface container using the 'background' color from the theme
-
-            }
-        }
-    }
-}
 
 
 @Composable
 fun Setting(
 
-){
+) {
     val context = LocalContext.current
+    val openAlertDialog = remember { mutableStateOf(false) }
+    if (openAlertDialog.value) {
+        AlertDialog(onDismissRequest = { openAlertDialog.value = false }, buttons = {
+            androidx.compose.material3.TextButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { openAlertDialog.value = false }) {
+                Text(text = stringResource(id = R.string.confirm))
+            }
+        }, text = {
+            Text(text = "asdghasjkhashdkkkjjjjjjjjjjjjjjjjjhsakdjasssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssjdkjasldhsjlassssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssshastlsajhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhsjdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd")
+        })
+    }
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = androidx.compose.material3.MaterialTheme.colorScheme.background
@@ -64,7 +80,7 @@ fun Setting(
                         LocalContentAlpha provides ContentAlpha.high,
                     ) {
                         IconButton(
-                            onClick = { },
+                            onClick = { (context as Activity).finish() },
                             enabled = true,
                         ) {
                             Icon(
@@ -96,15 +112,7 @@ fun Setting(
                     }
                 }
             }
-//                        Image(
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .fillMaxHeight(.15f),
-//                            painter = painterResource(id = R.drawable.ic_download),
-//                            contentDescription = stringResource(
-//                                id = R.string.ads
-//                            )
-//                        )
+
             SectionSetting(stringResource(id = R.string.sns_channel)) {
                 SectionItem(
                     title = stringResource(id = R.string.instagram),
@@ -141,7 +149,7 @@ fun Setting(
             }
             SectionSetting(stringResource(id = R.string.other)) {
                 SectionItem(title = stringResource(id = R.string.app_info)) {
-
+                    openAlertDialog.value = true
                 }
             }
         }
@@ -199,7 +207,7 @@ fun SectionItem(title: String = "Instagram", icon: Int? = null, onClick: () -> U
                 )
             }
             Icon(
-                 Icons.Default.ArrowForward,
+                Icons.Default.ArrowForward,
                 contentDescription = null,
                 Modifier
                     .width(20.dp)
