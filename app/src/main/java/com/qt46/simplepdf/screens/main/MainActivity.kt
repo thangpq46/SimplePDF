@@ -251,7 +251,7 @@ class MainActivity : ComponentActivity() {
 
                     NavHost(
                         navController,
-                        startDestination = Screen.Tools.route,
+                        startDestination = Screen.AllPDF.route,
                         Modifier.padding(innerPadding)
                     ) {
                         composable(Screen.Tools.route) {
@@ -560,7 +560,7 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp, horizontal = 12.dp)
-                .fillMaxHeight(.5f)
+                .fillMaxHeight(.8f)
         ) {
             itemsIndexed(tools) { index, tool ->
                 // Replace this with your item composable
