@@ -1,7 +1,6 @@
 package com.qt46.simplepdf.screens.main.ui
 
 
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,8 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,10 +35,16 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.qt46.simplepdf.R
+import com.qt46.simplepdf.data.Page
 
 @Composable
 
-fun ExtractImageUI(pages:List<String> = listOf(),onClickPage:(Int)->Unit={},onBackPressed:()->Unit){
+fun ExtractImageUI(
+    pages: List<Page> = listOf(),
+    onClickPage: (Int) -> Unit = {},
+    onActionClick: () -> Unit,
+    onBackPressed: () -> Unit
+) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(navigationIcon = {
@@ -47,31 +53,34 @@ fun ExtractImageUI(pages:List<String> = listOf(),onClickPage:(Int)->Unit={},onBa
             }
 
         }, actions = {
-            IconButton(onClick = { }) {
+            IconButton(onClick = onActionClick) {
                 Icon(
-                    Icons.Default.Info,
+                    Icons.Default.ArrowForward,
                     contentDescription = "merge icon",
                 )
             }
 
         }, title = {
             Text(
-                stringResource(id = R.string.tools_extract_img), color = MaterialTheme.colorScheme.onSurface, style = TextStyle(
+                stringResource(id = R.string.tools_extract_img),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = TextStyle(
                     fontSize = MaterialTheme.typography.titleMedium.fontSize
                 )
             )
         }, backgroundColor = MaterialTheme.colorScheme.background)
         Spacer(modifier = Modifier.height(5.dp))
-        LazyVerticalGrid(columns = GridCells.Adaptive(120.dp),
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(120.dp),
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
 
-        ){
-            itemsIndexed(items = pages){ index,item ->
+        ) {
+            itemsIndexed(items = pages) { index, item ->
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(item)
+                        .data(item.uri)
                         .crossfade(true)
                         .build(),
                     placeholder = painterResource(R.drawable.ic_image),
@@ -87,7 +96,9 @@ fun ExtractImageUI(pages:List<String> = listOf(),onClickPage:(Int)->Unit={},onBa
                         .shadow(16.dp, RoundedCornerShape(10.dp))
                 )
 
-
+                Checkbox(checked = item.isSelected, onCheckedChange = {
+                    onClickPage(index)
+                })
             }
         }
     }

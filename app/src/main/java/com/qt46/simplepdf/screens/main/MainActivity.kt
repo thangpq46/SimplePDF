@@ -1,6 +1,5 @@
 package com.qt46.simplepdf.screens.main
 
-import com.qt46.simplepdf.screens.main.ui.LoadingScreen
 import android.app.Activity
 import android.content.Intent
 import android.content.Intent.ACTION_GET_CONTENT
@@ -91,6 +90,7 @@ import com.qt46.simplepdf.screens.main.ui.EditMetaDataUI
 import com.qt46.simplepdf.screens.main.ui.ExtractImageUI
 import com.qt46.simplepdf.screens.main.ui.ExtractTextScreen
 import com.qt46.simplepdf.screens.main.ui.ImageToPDFScreen
+import com.qt46.simplepdf.screens.main.ui.LoadingScreen
 import com.qt46.simplepdf.screens.main.ui.MergeScreen
 import com.qt46.simplepdf.screens.main.ui.OptimizePDFUI
 import com.qt46.simplepdf.screens.main.ui.ReOrderPage
@@ -180,7 +180,8 @@ class MainActivity : ComponentActivity() {
                                         putExtra("uri_doc", it.toString())
                                     })
                             }
-                            TOOL_EXTRACT_IMAGE->{
+
+                            TOOL_EXTRACT_IMAGE -> {
                                 navController.navigate(Screen.ExtractImage.route)
                                 viewModel.initExtractImage(it)
 
@@ -191,7 +192,6 @@ class MainActivity : ComponentActivity() {
             }
 
         }
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -271,10 +271,13 @@ class MainActivity : ComponentActivity() {
 
                                     TOOL_REORDER -> {
                                         toolSelected = TOOL_REORDER
-                                        selectImagesActivityResult.launch(Intent(ACTION_OPEN_DOCUMENT).apply {
-                                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
-                                            type = "application/pdf"
-                                        })
+                                        selectImagesActivityResult.launch(
+                                            Intent(
+                                                ACTION_OPEN_DOCUMENT
+                                            ).apply {
+                                                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                                                type = "application/pdf"
+                                            })
 
                                     }
 
@@ -286,13 +289,15 @@ class MainActivity : ComponentActivity() {
                                         })
 
                                     }
-                                    TOOL_EXTRACT_IMAGE->{
+
+                                    TOOL_EXTRACT_IMAGE -> {
                                         toolSelected = TOOL_EXTRACT_IMAGE
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
                                             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                                             type = "application/pdf"
                                         })
                                     }
+
                                     TOOL_EXTRACT_TEXT -> {
                                         toolSelected = TOOL_EXTRACT_TEXT
                                         selectImagesActivityResult.launch(Intent(ACTION_GET_CONTENT).apply {
@@ -312,20 +317,27 @@ class MainActivity : ComponentActivity() {
 
                                     TOOL_OPTIMIZE -> {
                                         toolSelected = TOOL_OPTIMIZE
-                                        selectImagesActivityResult.launch(Intent(ACTION_OPEN_DOCUMENT).apply {
-                                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
-                                            type = "application/pdf"
-                                        })
+                                        selectImagesActivityResult.launch(
+                                            Intent(
+                                                ACTION_OPEN_DOCUMENT
+                                            ).apply {
+                                                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                                                type = "application/pdf"
+                                            })
 
                                     }
 
                                     TOOL_EDIT_META -> {
                                         toolSelected = TOOL_EDIT_META
-                                        selectImagesActivityResult.launch(Intent(ACTION_OPEN_DOCUMENT).apply {
-                                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
-                                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or  Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                            type = "application/pdf"
-                                        })
+                                        selectImagesActivityResult.launch(
+                                            Intent(
+                                                ACTION_OPEN_DOCUMENT
+                                            ).apply {
+                                                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                                                flags =
+                                                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                                type = "application/pdf"
+                                            })
 
                                     }
                                 }
@@ -411,7 +423,8 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Screen.ExtractImage.route) {
                             ExtractImageUI(
-                                viewModel.extractPages,
+                                viewModel.extractImagePages,
+                                viewModel::extractImgPageSelect,
                                 viewModel::extractImage
                             ) {
                                 navController.popBackStack()
@@ -451,12 +464,17 @@ class MainActivity : ComponentActivity() {
 
                             OptimizePDFUI()
                         }
-                        composable(Screen.ExtractText.route){
-                            ExtractTextScreen(viewModel.extractTextPages,viewModel.extractTextPagesState, onActionClicked =viewModel::extractText, onClickPage = viewModel::changePreviewExtractTextPage){
+                        composable(Screen.ExtractText.route) {
+                            ExtractTextScreen(
+                                viewModel.extractTextPages,
+                                viewModel.extractTextPagesState,
+                                onActionClicked = viewModel::extractText,
+                                onClickPage = viewModel::changePreviewExtractTextPage
+                            ) {
                                 navController.popBackStack()
                             }
                         }
-                        composable(Screen.Stared.route){
+                        composable(Screen.Stared.route) {
                             val starFiles by viewModel.staredFiles.collectAsState()
                             val textSearch by viewModel.searchText.collectAsState()
                             val searchState by viewModel.searchBarWidgetStatus.collectAsState()
@@ -473,17 +491,22 @@ class MainActivity : ComponentActivity() {
                                     finish()
                                 }
                                 Spacer(modifier = Modifier.height(9.dp))
-                                StaredFiles(filtedPDFs =starFiles , onClickItems = this@MainActivity::onClick, onStarClicked = viewModel::addStaredFile)
+                                StaredFiles(
+                                    filtedPDFs = starFiles,
+                                    onClickItems = this@MainActivity::onClick,
+                                    onStarClicked = viewModel::addStaredFile
+                                )
                             }
 
                         }
                     }
                 }
-                when(screenState){
-                    ScreenState.LOADING->{
+                when (screenState) {
+                    ScreenState.LOADING -> {
                         LoadingScreen()
                     }
-                    ScreenState.NOTIFICATION->{
+
+                    ScreenState.NOTIFICATION -> {
                         BottomDialog(
                             dialogTitle = notification.title,
                             dialogText = notification.detail,
@@ -500,7 +523,7 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    private fun dismissNotification(){
+    private fun dismissNotification() {
         viewModel.dismissNotification()
         viewModel.clearCache()
         navController.popBackStack()
@@ -519,7 +542,7 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
     Column {
         TopAppBar(navigationIcon = {
             Spacer(modifier = Modifier.width(9.dp))
-            IconButton(onClick = { (context as Activity) .finish() }) {
+            IconButton(onClick = { (context as Activity).finish() }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "back")
             }
 
@@ -549,16 +572,16 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                            Icon(
+                        Icon(
 
-                                painter = painterResource(id = tool.resourceID),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSecondary,
-                                        modifier = Modifier
-                                            .requiredSize(55.dp)
-                                            .background(tool.color, CircleShape)
-                                            .padding(vertical = 10.dp)
-                            )
+                            painter = painterResource(id = tool.resourceID),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondary,
+                            modifier = Modifier
+                                .requiredSize(55.dp)
+                                .background(tool.color, CircleShape)
+                                .padding(vertical = 10.dp)
+                        )
 
 
                         Text(
@@ -575,9 +598,12 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
             }
         }
         TextButton(onClick = { /*TODO*/ }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Default.Search, contentDescription =null )
+            Icon(Icons.Default.Search, contentDescription = null)
             Spacer(modifier = Modifier.width(4.dp))
-            Text(text = stringResource(id = R.string.cant_find_tool), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = stringResource(id = R.string.cant_find_tool),
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
 

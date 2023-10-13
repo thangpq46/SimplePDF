@@ -36,6 +36,7 @@ import com.qt46.simplepdf.data.Notification
 import com.qt46.simplepdf.data.PDFFile
 import com.qt46.simplepdf.data.PDFFileEntity
 import com.qt46.simplepdf.data.PDFRepository
+import com.qt46.simplepdf.data.Page
 import com.qt46.simplepdf.data.PdfDataBase
 import com.qt46.simplepdf.data.ScreenState
 import com.qt46.simplepdf.data.SearchBarStatus
@@ -740,8 +741,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     val metaCreationDate = _metaCreationDate.asStateFlow()
 
     private var _extractUri = MutableStateFlow(Uri.parse(""))
-    private val _extractPages = mutableStateListOf<String>()
-    val extractPages: List<String> = _extractPages
+    private val _extractImagePages = mutableStateListOf<Page>()
+    val extractImagePages: List<Page> = _extractImagePages
+
 
     fun initMetaData(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -913,10 +915,13 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 saveFolder.mkdirs()
             }
             for (page in 0 until reader.numberOfPages) {
-                _extractPages.add(
-                    savePDFPageToData(
-                        pdfiumCore, saveFolder, pdfDocument, page
+                _extractImagePages.add(
+                    Page(
+                        savePDFPageToData(
+                            pdfiumCore, saveFolder, pdfDocument, page
+                        ), false
                     )
+
                 )
             }
             pdfiumCore.closeDocument(pdfDocument)
@@ -926,7 +931,12 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
-    fun extractImage(page: Int) {
+    fun extractImgPageSelect(page: Int) {
+        _extractImagePages[page] =
+            _extractImagePages[page].copy(isSelected = !_extractImagePages[page].isSelected)
+    }
+
+    fun extractImage() {
         viewModelScope.launch {
             _screenState.update {
                 ScreenState.LOADING
@@ -937,17 +947,33 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                     _extractUri.value, "r"
                 )
             )
-            println(saveLocation.absolutePath.toString())
-            if (!saveLocation.exists()) {
-                saveLocation.mkdirs()
+            val imgSaveLocation = File(saveLocation, "Images")
+            if (!imgSaveLocation.exists()) {
+                imgSaveLocation.mkdirs()
             }
-            savePDFPageToData(
-                pdfiumCore, saveLocation, pdfDocument, page, scale = 1, quality = 100
-            )
+            for (page in _extractImagePages.indices) {
+                if (_extractImagePages[page].isSelected) {
+                    savePDFPageToData(
+                        pdfiumCore, imgSaveLocation, pdfDocument, page, scale = 1, quality = 100
+                    )
+                }
+            }
+
 
             pdfiumCore.closeDocument(pdfDocument)
+            _notification.update {
+                Notification(
+                    application.getString(R.string.save_success),
+
+                    String.format(
+                        application.getString(
+                            R.string.save_location
+                        ), "Images"
+                    )
+                )
+            }
             _screenState.update {
-                ScreenState.INDIE
+                ScreenState.NOTIFICATION
             }
         }
     }

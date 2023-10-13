@@ -40,19 +40,29 @@ import com.qt46.simplepdf.R
 
 @Composable
 
-fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(),onActionClicked:(String)->Unit={},onClickPage:(Int)->Unit={},onBackPressed:()->Unit){
+fun SplitScreen(
+    pages: List<String> = listOf(),
+    statePages: List<Boolean> = listOf(),
+    onActionClicked: (String) -> Unit = {},
+    onClickPage: (Int) -> Unit = {},
+    onBackPressed: () -> Unit
+) {
     val openAlertDialog = remember { mutableStateOf(false) }
     when {
         // ...
         openAlertDialog.value -> {
             DialogWithTextField(onDismiss = {
                 openAlertDialog.value = false
-            }, onConfirm = {
-                openAlertDialog.value = false
-                onActionClicked(it)
-            }, title = stringResource(id = R.string.input_file_name), placeholder = stringResource(
-                id = R.string.place_holder_filename
-            ))
+            },
+                onConfirm = {
+                    openAlertDialog.value = false
+                    onActionClicked(it)
+                },
+                title = stringResource(id = R.string.input_file_name),
+                placeholder = stringResource(
+                    id = R.string.place_holder_filename
+                )
+            )
         }
     }
 
@@ -61,9 +71,9 @@ fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(
             IconButton(onClick = { onBackPressed() }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "back")
             }
-            
+
         }, actions = {
-            IconButton(onClick = { openAlertDialog.value=true}) {
+            IconButton(onClick = { openAlertDialog.value = true }) {
                 Icon(
                     Icons.Default.CheckCircle,
                     contentDescription = "merge icon",
@@ -72,24 +82,24 @@ fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(
 
         }, title = {
             Text(
-                stringResource(id = R.string.title_split), color = MaterialTheme.colorScheme.onSurface, style = TextStyle(
+                stringResource(id = R.string.title_split),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = TextStyle(
                     fontSize = MaterialTheme.typography.titleMedium.fontSize
                 )
             )
         }, backgroundColor = MaterialTheme.colorScheme.background)
         Spacer(modifier = Modifier.height(5.dp))
-        LazyVerticalGrid(columns = GridCells.Adaptive(120.dp),
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(120.dp),
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
 
-        ){
-            itemsIndexed(items = pages){ index,item ->
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(item)
-                        .crossfade(true)
-                        .build(),
+        ) {
+            itemsIndexed(items = pages) { index, item ->
+                AsyncImage(model = ImageRequest.Builder(LocalContext.current).data(item)
+                    .crossfade(true).build(),
                     placeholder = painterResource(R.drawable.ic_image),
                     contentDescription = stringResource(R.string.all_pdf),
                     contentScale = ContentScale.Crop,
@@ -100,8 +110,7 @@ fun SplitScreen(pages:List<String> = listOf(),statePages:List<Boolean> = listOf(
                         .clickable {
                             onClickPage(index)
                         }
-                        .shadow(16.dp, RoundedCornerShape(10.dp))
-                )
+                        .shadow(16.dp, RoundedCornerShape(10.dp)))
 
                 Checkbox(checked = statePages[index], onCheckedChange = {
                     onClickPage(index)
