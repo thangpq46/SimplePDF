@@ -1,3 +1,5 @@
+package com.qt46.simplepdf.screens.main.ui
+
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

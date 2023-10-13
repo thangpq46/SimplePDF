@@ -1,6 +1,6 @@
 package com.qt46.simplepdf.screens.main
 
-import LoadingScreen
+import com.qt46.simplepdf.screens.main.ui.LoadingScreen
 import android.app.Activity
 import android.content.Intent
 import android.content.Intent.ACTION_GET_CONTENT
@@ -463,14 +463,14 @@ class MainActivity : ComponentActivity() {
                             Column {
 
                                 MainAppBar(
-                                    stringResource(id = R.string.all_pdf),
+                                    stringResource(id = R.string.starred_file),
                                     searchState,
                                     onSearchIconClick = viewModel::openSearchBar,
                                     textSearch,
                                     viewModel::filter,
                                     viewModel::closeSearchBar
                                 ) {
-                                    navController.popBackStack()
+                                    finish()
                                 }
                                 Spacer(modifier = Modifier.height(9.dp))
                                 StaredFiles(filtedPDFs =starFiles , onClickItems = this@MainActivity::onClick, onStarClicked = viewModel::addStaredFile)

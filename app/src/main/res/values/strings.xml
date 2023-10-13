@@ -8,7 +8,7 @@
     <string name="tool_image_to_pdf">Image to PDF</string>
     <string name="title_activity_pdfviewer">PDFViewer</string>
     <string name="go_to_page">Go to page</string>
-    <string name="ok">Ok</string>
+    <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="tool_optimize">Optimize PDF</string>
     <string name="tools">Tools</string>
@@ -52,7 +52,7 @@
     <string name="save_success">Save Successfully</string>
     <string name="save_location">File saved to: Download/%1$s.</string>
     <string name="cant_find_tool">Can\'t find what you looking for? Tell Us!</string>
-    <string name="save_success_detail">Sucessfully. File Saved!</string>
+    <string name="save_success_detail">Successfully. File Saved!</string>
 
     <string name="title_activity_editor">EditorActivity</string>
     <string name="title_editor">Editor</string>
@@ -128,4 +128,6 @@
     <string name="set_time">Set Time</string>
     <string name="pick">Pick</string>
     <string name="set">Set</string>
+    <string name="no_star_file">You don\'t have any starred files</string>
+    <string name="starred_file">Starred</string>
 </resources>
