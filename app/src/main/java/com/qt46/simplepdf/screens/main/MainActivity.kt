@@ -60,6 +60,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -68,6 +69,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import com.qt46.simplepdf.R
 import com.qt46.simplepdf.constants.TOOL_BROWSE_PDF
 import com.qt46.simplepdf.constants.TOOL_EDIT_META
@@ -196,8 +201,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        MobileAds.initialize(this
-//        ) { }
+        MobileAds.initialize(this
+        ) { }
         viewModel.loadAllPDF()
         setContent {
             navController = rememberNavController()
@@ -342,16 +347,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             }
-//                            AndroidView(
-//                                modifier = Modifier.fillMaxWidth(),
-//                                factory = { context ->
-//                                    AdView(context).apply {
-//                                        setAdSize(AdSize.BANNER)
-//                                        adUnitId = context.getString(R.string.app_name)
-//                                        loadAd(AdRequest.Builder().build())
-//                                    }
-//                                }
-//                            )
+
                         }
                         composable(Screen.AllPDF.route) {
                             val textSearch by viewModel.searchText.collectAsState()
@@ -560,7 +556,7 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp, horizontal = 12.dp)
-                .fillMaxHeight(.8f)
+                .fillMaxHeight(.7f)
         ) {
             itemsIndexed(tools) { index, tool ->
                 // Replace this with your item composable
@@ -605,6 +601,16 @@ fun MainScreenUI(onClickItems: (Int) -> Unit = {}) {
                 style = MaterialTheme.typography.bodyLarge
             )
         }
+        AndroidView(
+            modifier = Modifier.fillMaxWidth(),
+            factory = { context ->
+                AdView(context).apply {
+                    setAdSize(AdSize.LARGE_BANNER)
+                    adUnitId = "ca-app-pub-3940256099942544/6300978111"
+                    loadAd(AdRequest.Builder().build())
+                }
+            }
+        )
     }
 
 }

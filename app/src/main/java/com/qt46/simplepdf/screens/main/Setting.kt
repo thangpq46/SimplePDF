@@ -41,6 +41,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.qt46.simplepdf.R
 import com.qt46.simplepdf.constants.DEFAULT_MESSAGE_VALUE
 import com.qt46.simplepdf.constants.INTENT_TITLE
@@ -112,7 +116,16 @@ fun Setting(
                     }
                 }
             }
-
+            AndroidView(
+                modifier = Modifier.fillMaxWidth(),
+                factory = { context ->
+                    AdView(context).apply {
+                        setAdSize(AdSize.BANNER)
+                        adUnitId = "ca-app-pub-3940256099942544/6300978111"
+                        loadAd(AdRequest.Builder().build())
+                    }
+                }
+            )
             SectionSetting(stringResource(id = R.string.sns_channel)) {
                 SectionItem(
                     title = stringResource(id = R.string.instagram),
@@ -152,6 +165,16 @@ fun Setting(
                     openAlertDialog.value = true
                 }
             }
+            AndroidView(
+                modifier = Modifier.fillMaxWidth(),
+                factory = { context ->
+                    AdView(context).apply {
+                        setAdSize(AdSize.LARGE_BANNER)
+                        adUnitId = "ca-app-pub-3940256099942544/6300978111"
+                        loadAd(AdRequest.Builder().build())
+                    }
+                }
+            )
         }
     }
 }
