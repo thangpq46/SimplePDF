@@ -152,19 +152,16 @@ fun FileMerge(modifier: Modifier=Modifier,file:PDFFile,onRemoveClicked: (PDFFile
                 }
 
             }
-
-            Icon(
-                Icons.Default.Close,
-                                modifier = Modifier
-                                    .requiredSize(32.dp)
-                                    .clickable {
-                                        onRemoveClicked(file)
-                                    }
-                                    .clip(CircleShape),
-                tint = MaterialTheme.colorScheme.primary,
-                contentDescription = "pdf image"
-            )
-            Spacer(modifier = Modifier.width(4.dp))
+            IconButton(onClick = { onRemoveClicked(file) }) {
+                Icon(
+                    Icons.Default.Close,
+                    modifier = Modifier
+                        .requiredSize(32.dp)
+                        .clip(CircleShape),
+                    tint = MaterialTheme.colorScheme.primary,
+                    contentDescription = "pdf image"
+                )
+            }
         }
 
 
@@ -186,6 +183,8 @@ fun FileMerge(modifier: Modifier=Modifier,file:PDFFile,onRemoveClicked: (PDFFile
             textSearch,
             onTextChange,
             onClose,
+            haveSecondAction = true,
+            secondAction = onBackPressed,
             onBackPressed
         )
 
@@ -219,7 +218,9 @@ fun FileSelect(file:PDFFile,isSelected:Boolean,onClick: (PDFFile) -> Unit){
                 onClick(file)
             }
     ) {
-        Checkbox(checked = isSelected, onCheckedChange = {}, enabled = false)
+        Checkbox(checked = isSelected, onCheckedChange = {
+            onClick(file)
+        })
         Spacer(modifier = Modifier.width(4.dp))
         Icon(
             modifier = Modifier

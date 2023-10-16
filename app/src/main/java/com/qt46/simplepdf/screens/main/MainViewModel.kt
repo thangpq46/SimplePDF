@@ -454,12 +454,16 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                     )
                     val dateModified = cursor.getLong(modifiedCol)
                     _pdfFiles.update {
+                        var fileSize = cursor.getInt(sizeCol)
+                        if (fileSize>0){
+                            fileSize/=1024
+                        }
                         it.add(
                             PDFFile(
                                 cursor.getInt(idCol),
                                 cursor.getString(nameCol),
                                 fileUri.toString(),
-                                cursor.getInt(sizeCol).toString(),
+                                fileSize .toString(),
                                 convertLongToDate(dateModified)
                             )
                         )

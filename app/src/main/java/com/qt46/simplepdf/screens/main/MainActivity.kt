@@ -38,6 +38,7 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
@@ -72,7 +73,10 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.qt46.simplepdf.R
 import com.qt46.simplepdf.constants.TOOL_BROWSE_PDF
 import com.qt46.simplepdf.constants.TOOL_EDIT_META
@@ -116,7 +120,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private lateinit var navController: NavHostController
+    private val adRequest: AdRequest = AdRequest.Builder().build()
 
+    private var mInterstitialAd: InterstitialAd? = null
     private val selectImagesActivityResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -523,6 +529,21 @@ class MainActivity : ComponentActivity() {
         viewModel.dismissNotification()
         viewModel.clearCache()
         navController.popBackStack()
+        InterstitialAd.load(this, "ca-app-pub-3940256099942544/1033173712", adRequest,
+            object : InterstitialAdLoadCallback() {
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    // The mInterstitialAd reference will be null until
+                    // an ad is loaded.
+                    mInterstitialAd = interstitialAd
+                    mInterstitialAd?.show(this@MainActivity)
+                }
+
+                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    // Handle the error
+//                    Log.d(TAG, loadAdError.toString())
+                    mInterstitialAd = null
+                }
+            })
     }
 
     private fun onClick(file: PDFFile) {
@@ -626,30 +647,38 @@ fun MainAppBar(
     textSearch: String,
     onTextChange: (String) -> Unit,
     onClose: () -> Unit,
+    haveSecondAction:Boolean=false, secondAction:()->Unit={},
     onBackPress: () -> Unit
 ) {
     if (searchState == SearchBarStatus.CLOSED) {
-        DefaultAppBar(title, onSearchIconClick, onBackPress)
+        DefaultAppBar(title, onSearchIconClick,haveSecondAction,secondAction, onBackPress)
     } else {
         SearchAppBar(textSearch, onTextChange, onTextChange, onClose)
     }
 }
 
 @Composable
-fun DefaultAppBar(title: String, onSearchIconClick: () -> Unit, onBackPress: () -> Unit) {
+fun DefaultAppBar(title: String, onSearchIconClick: () -> Unit, haveSecondAction:Boolean=false, secondAction:()->Unit={}, onBackPress: () -> Unit ) {
     TopAppBar(navigationIcon = {
         IconButton(onClick = { onBackPress() }) {
             Icon(Icons.Default.ArrowBack, contentDescription = "back")
         }
 
     }, actions = {
-        Icon(
-            Icons.Default.Search,
-            contentDescription = "search icon",
-            modifier = Modifier.clickable {
-                onSearchIconClick()
-            })
-        Spacer(modifier = Modifier.width(9.dp))
+        IconButton(onClick = { onSearchIconClick() }) {
+            Icon(
+                Icons.Default.Search,
+                contentDescription = "search icon",
+                modifier = Modifier)
+        }
+        if (haveSecondAction){
+            IconButton(onClick = secondAction) {
+                Icon(
+                    Icons.Default.ArrowForward,
+                    contentDescription = "search icon",
+                    modifier = Modifier)
+            }
+        }
     }, title = {
         Text(
             title, color = MaterialTheme.colorScheme.onSurface, style = TextStyle(
