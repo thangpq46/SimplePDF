@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Simple PDF</string>
+    <string name="app_name">Smart PDF</string>
     <string name="tool_merge">Merger PDF</string>
     <string name="tool_split">Split</string>
     <string name="tool_image">Image to PDF</string>
