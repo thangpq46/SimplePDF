@@ -154,31 +154,37 @@ class MainActivity : ComponentActivity() {
                         when (toolSelected) {
                             TOOL_SPLIT_PDF -> {
                                 navController.navigate(Screen.SplitFile.route)
+                                showAd()
                                 viewModel.initPreviewSplit(it)
                             }
 
                             TOOL_REORDER -> {
                                 navController.navigate(Screen.ReOrderPage.route)
+                                showAd()
                                 viewModel.initReorderPage(it)
                             }
 
                             TOOL_EXTRACT_TEXT -> {
                                 navController.navigate(Screen.ExtractText.route)
+                                showAd()
                                 viewModel.initExtractText(it)
                             }
 
                             TOOL_EDIT_META -> {
                                 navController.navigate(Screen.EditMetaData.route)
+                                showAd()
                                 viewModel.initMetaData(it)
                             }
 
                             TOOL_OPTIMIZE -> {
                                 navController.navigate(Screen.Optimize.route)
+                                showAd()
                                 viewModel.compressPdf(it)
                             }
 
                             TOOL_IMAGE_TO_PDF -> {
                                 navController.navigate(Screen.ImageToPDF.route)
+                                showAd()
                                 viewModel.addImageToPDF(it)
                             }
 
@@ -204,6 +210,24 @@ class MainActivity : ComponentActivity() {
 
         }
 
+
+    private fun showAd(){
+        InterstitialAd.load(this@MainActivity, "ca-app-pub-3940256099942544/1033173712", adRequest,
+            object : InterstitialAdLoadCallback() {
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    // The mInterstitialAd reference will be null until
+                    // an ad is loaded.
+                    mInterstitialAd = interstitialAd
+                    mInterstitialAd?.show(this@MainActivity)
+                }
+
+                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    // Handle the error
+//                    Log.d(TAG, loadAdError.toString())
+                    mInterstitialAd = null
+                }
+            })
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -270,6 +294,8 @@ class MainActivity : ComponentActivity() {
                                 when (tool) {
                                     TOOL_MERGE_PDF -> {
                                         navController.navigate(Screen.Merge.route)
+
+
                                     }
 
                                     TOOL_SPLIT_PDF -> {

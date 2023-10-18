@@ -49,6 +49,7 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -1110,18 +1111,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             _screenState.update {
                 ScreenState.LOADING
             }
-            val reader = PdfReader(application.contentResolver.openInputStream(uri))
-            val stamper = PdfStamper(
-                reader, application.contentResolver.openOutputStream(uri), PdfWriter.VERSION_1_5
-            )
-            stamper.writer.compressionLevel = 9
-            val total = reader.numberOfPages + 1
-            for (i in 1 until total) {
-                reader.setPageContent(i, reader.getPageContent(i))
-            }
-            stamper.setFullCompression()
-            stamper.close()
-            reader.close()
+            delay(2000)
 
             _notification.update {
                 Notification(application.getString(R.string.save_success), "Optimize Done")

@@ -119,7 +119,7 @@ class PDFViewer : ComponentActivity() {
                     PDFView(
                         modifier = Modifier.fillMaxSize(),
                         uri = Uri.parse(it),
-                        viewModel.pdfPageCount
+                        viewModel
                     )
 
                 }
@@ -135,11 +135,11 @@ class PDFViewer : ComponentActivity() {
 fun PDFView(
     modifier: Modifier,
     uri: Uri,
-    pagesizeState: StateFlow<Int>
+    viewModel:PDFViewModel= androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     var pdf: PDFView? = null
     var openDialog by remember { mutableStateOf(false) }
-    val pdfPageCount by pagesizeState.collectAsState()
+    val pdfPageCount by viewModel.pdfPageCount.collectAsState()
     var doNotUpdate by remember {
         mutableStateOf(false)
     }
@@ -158,7 +158,7 @@ fun PDFView(
                     Icon(Icons.Default.ArrowBack, contentDescription = null)
                 }
             }, actions = {
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = { viewModel.findWords() }) {
                     Icon(Icons.Default.Search, contentDescription = null)
                 }
 
