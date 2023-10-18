@@ -158,9 +158,9 @@ fun PDFView(
                     Icon(Icons.Default.ArrowBack, contentDescription = null)
                 }
             }, actions = {
-                IconButton(onClick = { viewModel.findWords() }) {
-                    Icon(Icons.Default.Search, contentDescription = null)
-                }
+//                IconButton(onClick = { viewModel.findWords() }) {
+//                    Icon(Icons.Default.Search, contentDescription = null)
+//                }
 
             }, modifier = Modifier.padding(horizontal = 9.dp))
         },
